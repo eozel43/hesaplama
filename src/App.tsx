@@ -119,7 +119,7 @@ function App() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <Calculator className="w-12 h-12 text-indigo-600 mr-3" />
-            <h1 className="text-4xl font-bold text-gray-800">Ulaşım Hizmetleri Müdürlüğü Eşel Mobil Sistemi</h1>
+            <h1 className="text-4xl font-bold text-gray-800">Ekonomik Değişim Hesaplayıcısı</h1>
           </div>
           <p className="text-gray-600 text-lg">Yakıt, TÜFE ve Asgari Ücret değişimlerini hesaplayın</p>
         </div>
@@ -127,9 +127,10 @@ function App() {
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Yakıt Fiyatı */}
           <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-              <div className="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
-                      <span>Yakıt Fiyatı</span>
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                <div className="w-3 h-3 bg-orange-500 rounded-full mr-3 flex-shrink-0"></div>
+                <span>Yakıt Fiyatı</span>
               </h2>
               <p className="text-red-500 italic text-sm font-normal pl-6">
                 (
@@ -464,9 +465,9 @@ function ResultCard({ title, data, result, valueType, weightedLabel, color }: Re
   };
 
   const getStatusIcon = (change: number) => {
-    if (change > 0) return <TrendingUp className="w-5 h-5 text-red-500" />;
-    if (change < 0) return <TrendingDown className="w-5 h-5 text-green-500" />;
-    return <Minus className="w-5 h-5 text-gray-500" />;
+    if (change > 0) return <TrendingUp className="w-5 h-5 text-red-500 ml-2" />;
+    if (change < 0) return <TrendingDown className="w-5 h-5 text-green-500 ml-2" />;
+    return <Minus className="w-5 h-5 text-gray-500 ml-2" />;
   };
 
   const getStatusColor = (change: number) => {
