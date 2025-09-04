@@ -20,11 +20,8 @@ interface CalculationResult {
 const MONTH_NAMES = ["", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
 const TUIK_MOCK_DATA: { [key: string]: number } = {
-  '2023-01': 1203.06, '2023-02': 1241.04, '2023-03': 1269.84, '2023-04': 1299.99,
-  '2023-05': 1300.51, '2023-06': 1351.59, '2023-07': 1479.24, '2023-08': 1612.39,
-  '2023-09': 1688.93, '2023-10': 1747.01, '2023-11': 1798.28, '2023-12': 1851.35,
-  '2024-01': 1974.77, '2024-02': 2064.76, '2024-03': 2130.07, '2024-04': 2197.39,
-  '2024-05': 2213.78, '2024-06': 2275.95,
+  '2024-01': 1984.02, '2024-02': 2073.88, '2024-03': 2139.47, '2024-04': 2207.50,
+  '2024-05': 2281.85, '2024-06': 2319.29,'2024-07': 2394.10, '2024-08': 2453.34, '2024-09': 2526.16, '2024-10': 2598.91, '2024-11': 2657.23, '2024-12': 2684.55,
 };
 
 function App() {
@@ -276,6 +273,7 @@ function App() {
                     <option value="">Yıl</option>
                     <option value="2023">2023</option>
                     <option value="2024">2024</option>
+                    <option value="2024">2024</option>
                   </select>
                 </div>
                 <input 
@@ -318,6 +316,7 @@ function App() {
                     <option value="">Yıl</option>
                     <option value="2023">2023</option>
                     <option value="2024">2024</option>
+                    <option value="2024">2024</option>
                   </select>
                 </div>
                 <input 
@@ -349,6 +348,7 @@ function App() {
                   >
                     <option value="">Yıl</option>
                     <option value="2023">2023</option>
+                    <option value="2024">2024</option>
                     <option value="2024">2024</option>
                   </select>
                 </div>
