@@ -129,7 +129,8 @@ function App() {
           <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
               <div className="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
-             Yakıt Fiyatı (https://www.tppd.com.tr adresinden alınacaktır)
+             <span>Yakıt Fiyatı</span>
+              <span className="text-red-500 italic ml-2 text-sm font-normal">(https://www.tppd.com.tr adresinden alınacaktır)</span>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
