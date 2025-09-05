@@ -50,6 +50,13 @@ function App() {
       return { change: 0, weightedChange: 0, isValid: false, error: 'Lütfen tüm alanları geçerli şekilde doldurunuz.' };
     }
 
+    const date1 = new Date(parseInt(data.year1), parseInt(data.month1) - 1);
+    const date2 = new Date(parseInt(data.year2), parseInt(data.month2) - 1);
+
+    if (date2 < date1) {
+      return { change: 0, weightedChange: 0, isValid: false, error: 'İkinci dönem, ilk dönemden daha ileri bir tarih olmalıdır.' };
+    }
+
     if (value1 <= 0) {
       return { change: 0, weightedChange: 0, isValid: false, error: "İlk değer 0'dan büyük olmalıdır." };
     }
@@ -522,3 +529,5 @@ function ResultCard({ title, data, result, valueType, weightedLabel, color }: Re
 }
 
 export default App;
+
+
