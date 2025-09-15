@@ -146,6 +146,82 @@ function InputSection({ title, data, onDataChange, color, infoLink, years }: Inp
 }
 
 
+/**
+ * A reusable component for displaying the result of a single calculation.
+ */
+interface ResultCardProps {
+  title: string;
+  data: CalculationData;
+  result: CalculationResult;
+  valueType: string;
+  weightedLabel: string;
+  color: 'orange' | 'blue' | 'green';
+}
+
+function ResultCard({ title, data, result, valueType, weightedLabel, color }: ResultCardProps) {
+  const getFullName = (month: string, year: string) => {
+    const monthName = MONTH_NAMES[parseInt(month)];
+    return (monthName && year) ? `${monthName} ${year}` : '';
+  };
+
+  const getStatusIcon = (change: number) => {
+    if (change > 0) return <TrendingUp className="w-5 h-5 text-red-500 ml-2" />;
+    if (change < 0) return <TrendingDown className="w-5 h-5 text-green-500 ml-2" />;
+    return <Minus className="w-5 h-5 text-gray-500 ml-2" />;
+  };
+
+  const getStatusColor = (change: number) => {
+    if (change > 0) return 'border-red-200 bg-red-50';
+    if (change < 0) return 'border-green-200 bg-green-50';
+    return 'border-gray-200 bg-gray-50';
+  };
+
+  const colorClasses = {
+    orange: 'bg-orange-500',
+    blue: 'bg-blue-500',
+    green: 'bg-green-500'
+  };
+
+  if (!result.isValid) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-red-200 bg-red-50">
+        <div className="flex items-center mb-4">
+          <div className={`w-3 h-3 ${colorClasses[color]} rounded-full mr-3`}></div>
+          <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
+        </div>
+        <div className="text-red-600 font-medium">{result.error}</div>
+      </div>
+    );
+  }
+
+  const fullName1 = getFullName(data.month1, data.year1);
+  const fullName2 = getFullName(data.month2, data.year2);
+  const changeText = result.change > 0 ? `${valueType} artışı` : `${valueType} düşüşü`;
+
+  return (
+    <div className={`bg-white rounded-xl shadow-lg p-6 border-2 ${getStatusColor(result.change)} transition-all duration-300`}>
+      <div className="flex items-center mb-4">
+        <div className={`w-3 h-3 ${colorClasses[color]} rounded-full mr-3`}></div>
+        <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
+        {getStatusIcon(result.change)}
+      </div>
+      
+      <div className="space-y-3">
+        <div className="text-gray-700">
+          <strong>{fullName1}</strong> & <strong>{fullName2}</strong> arası {changeText}:
+        </div>
+        <div className="text-3xl font-bold text-gray-900">
+          %{Math.abs(result.change).toFixed(2)}
+        </div>
+        <div className="text-sm text-gray-600 bg-gray-100 rounded-lg p-3">
+          {weightedLabel}: <span className="font-semibold">%{Math.abs(result.weightedChange).toFixed(2)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 // --- LOGIN COMPONENT ---
 function LoginComponent({ onLogin, error }) {
     const [username, setUsername] = useState('');
@@ -434,6 +510,4 @@ function App() {
 }
 
 export default App;
-
-
 
