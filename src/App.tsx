@@ -269,6 +269,7 @@ function App() {
     const [results, setResults] = useState<{ [key in CalculationCategory]?: CalculationResult }>({});
     const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('isAuthenticated') === 'true');
     const [loginError, setLoginError] = useState('');
+    const [baseTicketPrice, setBaseTicketPrice] = useState(25.00);
 
     const handleLogin = (username, password) => {
         if (username === 'ulasim' && password === 'ulasim') {
@@ -359,6 +360,13 @@ function App() {
     const totalWeightedChange = Object.values(results)
         .filter(result => result?.isValid)
         .reduce((sum, result) => sum + (result?.weightedChange || 0), 0);
+
+    const newTicketPrice = useMemo(() => {
+        if (totalWeightedChange > -100) { // Prevent negative prices
+            return baseTicketPrice * (1 + totalWeightedChange / 100);
+        }
+        return 0;
+    }, [baseTicketPrice, totalWeightedChange]);
 
     const hasAnyResult = Object.keys(results).length > 0;
     const hasValidResults = Object.values(results).some(result => result?.isValid);
@@ -483,6 +491,22 @@ function App() {
                                         {totalWeightedChange > 0 ? 'Artış' : totalWeightedChange < 0 ? 'Düşüş' : 'Değişim Yok'}
                                     </div>
                                 </div>
+                                
+                                <div className="mt-6 pt-6 border-t border-gray-300/80 text-center space-y-2">
+                                    <div className="text-lg text-gray-800 flex justify-center items-center">
+                                        <span className="w-48 text-right mr-4">Mevcut Tam Bilet Ücreti:</span>
+                                        <span className="w-32 text-left font-bold">
+                                            {baseTicketPrice.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-semibold text-gray-900 flex justify-center items-center">
+                                        <span className="w-48 text-right mr-4">Yeni Tam Bilet Ücreti:</span>
+                                        <span className="w-32 text-left font-bold text-indigo-600">
+                                            {newTicketPrice.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+                                        </span>
+                                    </div>
+                                </div>
+
                             </div>
                         )}
                     </div>
@@ -493,3 +517,4 @@ function App() {
 }
 
 export default App;
+
