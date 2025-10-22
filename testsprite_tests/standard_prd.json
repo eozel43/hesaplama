@@ -1,0 +1,15 @@
+{
+  "title": "Ulaşım Hizmetleri Müdürlügü - Eşel Mobil Sistemi (Minimal PRD)",
+  "version": "0.1",
+  "summary": "Arayüz, kullanıcı girişi, yakıt, TÜFE ve asgari ücret değişimlerinin hesaplanması ile ilgili küçük bir React uygulaması.",
+  "features": [
+    "Kullanıcı girişi (local mock)",
+    "Yakıt/TÜFE/Asgari ücret hesaplama formu",
+    "Sonuçların gösterilmesi ve ağırlıklı değişim hesaplama"
+  ],
+  "acceptance_criteria": [
+    "Uygulama açıldığında giriş formu görünmeli",
+    "Geçerli giriş sonrası hesaplama formu erişilebilir olmalı",
+    "Hesaplama doğru biçimde sonuç göstermeli"
+  ]
+}

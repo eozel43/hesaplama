@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Print: only show the results container */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #printable-results, #printable-results * {
+    visibility: visible !important;
+  }
+  #printable-results {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0 16px;
+    background: white;
+  }
+}

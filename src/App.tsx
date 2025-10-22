@@ -443,7 +443,7 @@ function App() {
                 </form>
 
                 {hasAnyResult && (
-                    <div className="mt-12 space-y-6">
+                    <div id="printable-results" className="mt-12 space-y-6">
                         {results.fuel && (
                             <ResultCard
                                 title="Yakıt Fiyatı"
@@ -509,6 +509,17 @@ function App() {
 
                             </div>
                         )}
+
+                        {/* PDF Print Button */}
+                        <div className="flex justify-center pt-2">
+                            <button
+                                type="button"
+                                onClick={() => window.print()}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                            >
+                                PDF olarak yazdır
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

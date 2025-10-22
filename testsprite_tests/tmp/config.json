@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:5173",
+  "loginUser": "ulasim",
+  "loginPassword": "ulasim",
+  "executionArgs": {
+    "projectName": "deneme",
+    "projectPath": "c:\\Users\\Ulasim\\deneme",
+    "testIds": [],
+    "additionalInstruction": "",
+    "envs": {
+      "API_KEY": "sk-user-x9BPehfAOGHcZuUmhWldvIpoXE0b_ck5FKRn5KwEkRvySb1fGL3eZLCBZxo7UHlLWaVsgMjLeCeRJhkKi8iC6pDQlZ9BV1hfvkyS9IeN_viXh9TZ9tMyyZatU3RLcX3_JW0"
+    }
+  },
+  "proxy": "http://7c9ecbe2-4958-4d23-98af-c9a455a1f117:Ake1GdO6iZhPrvRvFVF1woectrwbsF4o@tun.testsprite.com:8080"
+}

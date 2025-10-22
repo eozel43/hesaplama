@@ -1,0 +1,20 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "React",
+    "Vite",
+    "TailwindCSS"
+  ],
+  "features": [
+    {
+      "name": "App",
+      "description": "Main React application component and UI logic.",
+      "files": ["src/App.tsx"]
+    },
+    {
+      "name": "Entry",
+      "description": "Application entry point and HTML mount.",
+      "files": ["src/main.tsx", "index.html"]
+    }
+  ]
+}
