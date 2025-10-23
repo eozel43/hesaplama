@@ -393,6 +393,7 @@ function App() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 font-sans">
             <div className="max-w-4xl mx-auto">
                 <div className="text-center mb-8">
+                    <img src={logo} alt="Kütahya Belediyesi logosu" className="w-14 h-14 mx-auto mb-2 object-contain" />
                     <div className="flex items-center justify-center mb-4">
                         <Calculator className="w-12 h-12 text-indigo-600 mr-3" />
                         <h1 className="text-4xl font-bold text-gray-800">Ulaşım Hizmetleri Müdürlüğü Eşel Mobil Sistemi</h1>
