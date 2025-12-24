@@ -55,7 +55,7 @@ const TUIK_MOCK_DATA: { [key: string]: number } = {
 };
 
 const ASGARI_UCRET_MOCK_DATA: { [key: string]: number } = {
-    '2025': 22104,
+    '2025': 22104, '2026': 28075,
 };
 
 const WEIGHTS = {
