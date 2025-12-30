@@ -1,25 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import logo from '../image_3ab9b2f9-e025-42e7-aa6b-8255c6443aaf.png';
 
+
 // --- ICON COMPONENTS (replaces lucide-react) ---
-// In a real build environment, you would import these from 'lucide-react'
-// e.g., import { Calculator, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-const Calculator = ({ className }) => (
+const Calculator = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <rect width="16" height="20" x="4" y="2" rx="2" /><line x1="8" x2="16" y1="6" y2="6" /><line x1="16" x2="16" y1="14" y2="18" /><path d="M16 10h.01" /><path d="M12 10h.01" /><path d="M8 10h.01" /><path d="M12 14h.01" /><path d="M8 14h.01" /><path d="M12 18h.01" /><path d="M8 18h.01" />
     </svg>
 );
-const TrendingUp = ({ className }) => (
+const TrendingUp = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" />
     </svg>
 );
-const TrendingDown = ({ className }) => (
+const TrendingDown = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" />
     </svg>
 );
-const Minus = ({ className }) => (
+const Minus = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <path d="M5 12h14" />
     </svg>
@@ -63,6 +62,18 @@ const WEIGHTS = {
     tufe: 0.33,
     wage: 0.33,
 };
+
+const TICKET_TYPES = [
+    { id: 'tam', name: 'Tam Bilet', price: 25.00 },
+    { id: 'basin', name: 'Basın Kartı Biniş', price: 14.00 },
+    { id: 'ilkokul_lise', name: 'İlkokul-Lise Biniş', price: 13.00 },
+    { id: 'kredi_karti', name: 'Kredi Kartı Biniş', price: 25.00, note: '(+ Komisyon Ücreti)' },
+    { id: 'nfc_qr', name: 'NFC-QR Biniş', price: 33.00 },
+    { id: 'uni_ogrenci', name: 'Üniversite Öğrenci Biniş', price: 20.00 },
+    { id: 'uni_ikamet', name: 'Üniversite İkamet Kart Biniş', price: 18.00 },
+    { id: 'uni_hat16', name: 'Üniversite Öğr. 16 No.lu Hat', price: 10.00 },
+    { id: 'aktarma', name: 'Aktarma', price: 10.00 },
+];
 
 const INITIAL_DATA_STATE: CalculationData = {
     month1: '', year1: '', value1: '', month2: '', year2: '', value2: ''
@@ -269,11 +280,11 @@ function App() {
     });
 
     const [results, setResults] = useState<{ [key in CalculationCategory]?: CalculationResult }>({});
-    const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('isAuthenticated') === 'true');
+    const [isAuthenticated, setIsAuthenticated] = useState(false); // Default to false for preview safety
     const [loginError, setLoginError] = useState('');
-    const [baseTicketPrice, setBaseTicketPrice] = useState(25.00);
+    // baseTicketPrice state removed as we now use TICKET_TYPES
 
-    const handleLogin = (username, password) => {
+    const handleLogin = (username: string, password: string) => {
         if (username === 'ulasim' && password === 'ulasim') {
             localStorage.setItem('isAuthenticated', 'true');
             setIsAuthenticated(true);
@@ -282,6 +293,14 @@ function App() {
             setLoginError('Hatalı kullanıcı adı veya şifre.');
         }
     };
+
+    // Check localStorage on mount
+    React.useEffect(() => {
+        const storedAuth = localStorage.getItem('isAuthenticated');
+        if (storedAuth === 'true') {
+            setIsAuthenticated(true);
+        }
+    }, []);
 
     const years = useMemo(() => generateYearOptions(), []);
 
@@ -363,12 +382,12 @@ function App() {
         .filter(result => result?.isValid)
         .reduce((sum, result) => sum + (result?.weightedChange || 0), 0);
 
-    const newTicketPrice = useMemo(() => {
+    const calculateNewPrice = (basePrice: number) => {
         if (totalWeightedChange > -100) { // Prevent negative prices
-            return baseTicketPrice * (1 + totalWeightedChange / 100);
+            return basePrice * (1 + totalWeightedChange / 100);
         }
         return 0;
-    }, [baseTicketPrice, totalWeightedChange]);
+    };
 
     const hasAnyResult = Object.keys(results).length > 0;
     const hasValidResults = Object.values(results).some(result => result?.isValid);
@@ -495,19 +514,32 @@ function App() {
                                     </div>
                                 </div>
                                 
-                                <div className="mt-6 pt-6 border-t border-gray-300/80 text-center space-y-2">
-                                    <div className="text-lg text-gray-800 flex justify-center items-center">
-                                        <span className="w-48 text-right mr-4">Mevcut Tam Bilet Ücreti:</span>
-                                        <span className="w-32 text-left font-bold">
-                                            {baseTicketPrice.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
-                                        </span>
-                                    </div>
-                                    <div className="text-xl font-semibold text-gray-900 flex justify-center items-center">
-                                        <span className="w-48 text-right mr-4">Yeni Tam Bilet Ücreti:</span>
-                                        <span className="w-32 text-left font-bold text-indigo-600">
-                                            {newTicketPrice.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
-                                        </span>
-                                    </div>
+                                <div className="mt-8 overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bilet Türü</th>
+                                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Mevcut Fiyat</th>
+                                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Yeni Fiyat</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {TICKET_TYPES.map((ticket) => (
+                                                <tr key={ticket.id}>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        {ticket.name}
+                                                        {ticket.note && <span className="text-xs text-gray-500 ml-1">{ticket.note}</span>}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                                                        {ticket.price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-600 text-right">
+                                                        {calculateNewPrice(ticket.price).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
 
                             </div>
@@ -525,10 +557,15 @@ function App() {
                         </div>
                     </div>
                 )}
+                {/* Footer Signature */}
+                <div className="mt-12 text-right">
+                    <p className="text-gray-500 text-sm italic">
+                        Endüstri Yük. Mühendisi Emre ÖZEL
+                    </p>
+                </div>
             </div>
         </div>
     );
 }
 
 export default App;
-
