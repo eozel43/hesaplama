@@ -64,14 +64,14 @@ const WEIGHTS = {
 };
 
 const TICKET_TYPES = [
-    { id: 'tam', name: 'Tam Bilet', price: 25.00 },
-    { id: 'basin', name: 'Basın Kartı Biniş', price: 14.00 },
-    { id: 'ilkokul_lise', name: 'İlkokul-Lise Biniş', price: 13.00 },
-    { id: 'kredi_karti', name: 'Kredi Kartı Biniş', price: 25.00, note: '(+ Komisyon Ücreti)' },
-    { id: 'nfc_qr', name: 'NFC-QR Biniş', price: 33.00 },
-    { id: 'uni_ogrenci', name: 'Üniversite Öğrenci Biniş', price: 20.00 },
-    { id: 'uni_ikamet', name: 'Üniversite İkamet Kart Biniş', price: 18.00 },
-    { id: 'uni_hat16', name: 'Üniversite Öğr. 16 No.lu Hat', price: 10.00 },
+    { id: 'tam', name: 'Tam Bilet', price: 30.00 },
+    { id: 'basin', name: 'Basın Kartı Biniş', price: 20.00 },
+    { id: 'ilkokul_lise', name: 'İlkokul-Lise Biniş', price: 17.00 },
+    { id: 'kredi_karti', name: 'Kredi Kartı Biniş', price: 30.00, note: '(+ Komisyon Ücreti)' },
+    { id: 'nfc_qr', name: 'NFC-QR Biniş', price: 38.00 },
+    { id: 'uni_ogrenci', name: 'Üniversite Öğrenci Biniş', price: 24.00 },
+    { id: 'uni_ikamet', name: 'Üniversite İkamet Kart Biniş', price: 22.00 },
+    { id: 'uni_hat16', name: 'Üniversite Öğr. 16 No.lu Hat', price: 12.00 },
     { id: 'aktarma', name: 'Aktarma', price: 10.00 },
 ];
 
