@@ -419,7 +419,7 @@ function App() {
                     </div>
                     <p className="text-gray-600 text-lg">Yakıt, TÜFE ve Asgari Ücret değişimlerini hesaplayın</p>
                     <p className="text-xs text-gray-500 mt-2 max-w-2xl mx-auto">
-                        En son hesaplama tarihi: 25.08.2025, Dikkate Alınan Yakıt Tutarı: 52,5TL, Meclis Tarihi: 3.09.2025 tarih ve 247 sayılı meclis kararı; Zamlı tarife uygulama tarihi: 12.09.2025
+                        En son hesaplama tarihi: 05.01.206, Dikkate Alınan Yakıt Tutarı: 56,14 TL (Lukoil), Meclis Tarihi: 07.01.2026 tarih ve 3 sayılı meclis kararı; Zamlı tarife uygulama tarihi: 14.01.2026
                     </p>
                 </div>
 
