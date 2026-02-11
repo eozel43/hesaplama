@@ -47,10 +47,10 @@ type CalculationCategory = 'fuel' | 'tufe' | 'wage';
 const MONTH_NAMES = ["", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
 const TUIK_MOCK_DATA: { [key: string]: number } = {
-    '2024-01': 1984.02, '2024-02': 2073.88, '2024-03': 2139.47, '2024-04': 2207.50,
-    '2024-05': 2281.85, '2024-06': 2319.29, '2024-07': 2394.10, '2024-08': 2453.34, '2024-09': 2526.16, '2024-10': 2598.91, '2024-11': 2657.23, '2024-12': 2684.55,
-    '2025-01': 2819.65, '2025-02': 2883.75, '2025-03': 2954.69, '2025-04': 3043.23, '2025-05': 3089.74, '2025-06': 3132.17, '2025-07': 3196.66, '2025-08': 3261.72,
-    '2025-09': 3367.22, '2025-10': 3453.09, '2025-11': 3482.96, '2025-12': 3513.87,
+    '2024-01': 62.33, '2024-02': 65.15, '2024-03': 67.21, '2024-04': 69.35,
+    '2024-05': 71.68, '2024-06': 72.86, '2024-07': 75.21, '2024-08': 77.07, '2024-09': 79.36, '2024-10': 81.64, '2024-11': 83.48, '2024-12': 84.33,
+    '2025-01': 88.58, '2025-02': 90.59, '2025-03': 92.82, '2025-04': 95.60, '2025-05': 97.06, '2025-06': 98.40, '2025-07': 100.42, '2025-08': 102.47,
+    '2025-09': 105.78, '2025-10': 108.48, '2025-11': 109.42, '2025-12': 110.39, '2026-01': 115.73
 };
 
 const ASGARI_UCRET_MOCK_DATA: { [key: string]: number } = {
@@ -419,7 +419,7 @@ function App() {
                     </div>
                     <p className="text-gray-600 text-lg">Yakıt, TÜFE ve Asgari Ücret değişimlerini hesaplayın</p>
                     <p className="text-xs text-gray-500 mt-2 max-w-2xl mx-auto">
-                        En son hesaplama tarihi: 05.01.206, Dikkate Alınan Yakıt Tutarı: 56,14 TL (Lukoil), Meclis Tarihi: 07.01.2026 tarih ve 3 sayılı meclis kararı; Zamlı tarife uygulama tarihi: 14.01.2026
+                        En son hesaplama tarihi: 05.01.206, Dikkate Alınan Yakıt Tutarı: 56,14 TL (Lukoil), Meclis Tarihi: 07.01.2026 tarih ve 3 sayılı meclis kararı; Zamlı tarife uygulama tarihi: 14.01.2026; (TÜFE 2025=100)
                     </p>
                 </div>
 
