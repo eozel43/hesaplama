@@ -6,30 +6,25 @@ const { TUIK_MOCK_DATA: INITIAL_TUIK, ASGARI_UCRET_MOCK_DATA: INITIAL_WAGE, WEIG
 
 // --- ICON COMPONENTS ---
 const Calculator = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <rect width="16" height="20" x="4" y="2" rx="2" /><line x1="8" x2="16" y1="6" y2="6" /><line x1="16" x2="16" y1="14" y2="18" /><path d="M16 10h.01" /><path d="M12 10h.01" /><path d="M8 10h.01" /><path d="M12 14h.01" /><path d="M8 14h.01" /><path d="M12 18h.01" /><path d="M8 18h.01" />
-    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="16" height="20" x="4" y="2" rx="2" /><line x1="8" x2="16" y1="6" y2="6" /><line x1="16" x2="16" y1="14" y2="18" /><path d="M16 10h.01" /><path d="M12 10h.01" /><path d="M8 10h.01" /><path d="M12 14h.01" /><path d="M8 14h.01" /><path d="M12 18h.01" /><path d="M8 18h.01" /></svg>
 );
 const TrendingUp = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" />
-    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg>
 );
 const TrendingDown = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" />
-    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" /></svg>
 );
 const Minus = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M5 12h14" />
-    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14" /></svg>
 );
 const Sun = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
 );
 const Moon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+);
+const Info = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
 );
 
 // --- ANIMATION COMPONENT ---
@@ -49,6 +44,17 @@ const CountUp = ({ end, decimals = 2, prefix = "", suffix = "" }: { end: number,
     }, [end]);
     return <span>{prefix}{count.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}</span>;
 };
+
+// --- TOOLTIP COMPONENT ---
+const Tooltip = ({ text }: { text: string }) => (
+    <div className="group relative inline-block ml-2 cursor-help">
+        <Info className="text-gray-400 hover:text-indigo-500 transition-colors" />
+        <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-48 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 z-50 text-center shadow-xl">
+            {text}
+            <div className="absolute top-full left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></div>
+        </div>
+    </div>
+);
 
 // --- TYPES & CONSTANTS ---
 interface CalculationData { month1: string; year1: string; value1: string; month2: string; year2: string; value2: string; }
@@ -192,16 +198,16 @@ function InputSection({ title, data, onDataChange, color, infoLink, years }: any
         <div className="space-y-4">
             <h3 className="font-medium text-gray-700 dark:text-gray-300">{p === '1' ? 'İlk Dönem' : 'İkinci Dönem'}</h3>
             <div className="grid grid-cols-2 gap-3">
-                <select value={data[`month${p}`]} onChange={e => onDataChange(`month${p}`, e.target.value)} className="w-full px-3 py-2 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg">
+                <select value={data[`month${p}`]} onChange={e => onDataChange(`month${p}`, e.target.value)} className="w-full px-3 py-2 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
                     <option value="">Ay</option>
                     {MONTH_NAMES.slice(1).map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
                 </select>
-                <select value={data[`year${p}`]} onChange={e => onDataChange(`year${p}`, e.target.value)} className="w-full px-3 py-2 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg">
+                <select value={data[`year${p}`]} onChange={e => onDataChange(`year${p}`, e.target.value)} className="w-full px-3 py-2 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
                     <option value="">Yıl</option>
                     {years.map((y: any) => <option key={y} value={y}>{y}</option>)}
                 </select>
             </div>
-            <input type="number" step="0.01" value={data[`value${p}`]} onChange={e => onDataChange(`value${p}`, e.target.value)} placeholder={`${title} değeri`} className="w-full px-3 py-2 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg" />
+            <input type="number" step="0.01" value={data[`value${p}`]} onChange={e => onDataChange(`value${p}`, e.target.value)} placeholder={`${title} değeri`} className="w-full px-3 py-2 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
         </div>
     );
     return (
@@ -215,35 +221,74 @@ function InputSection({ title, data, onDataChange, color, infoLink, years }: any
     );
 }
 
-function ResultCard({ title, data, result, valueType, weightedLabel, color }: any) {
+function ResultCard({ title, data, result, valueType, weightedLabel, color, tooltip }: any) {
+
     if (!result.isValid) return <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-center">{title}: {result.error}</div>;
+
     const colorClass = color === 'orange' ? 'bg-orange-500' : color === 'blue' ? 'bg-blue-500' : 'bg-green-500';
+
     return (
+
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border-2 border-indigo-50 dark:border-slate-700 text-center flex flex-col items-center">
+
             <div className="flex items-center mb-4">
+
                 <div className={`w-3 h-3 ${colorClass} rounded-full mr-3`}></div>
+
                 <h3 className="text-xl font-semibold dark:text-white">{title}</h3>
+
                 {result.change > 0 ? <TrendingUp className="text-red-500 ml-2"/> : <TrendingDown className="text-green-500 ml-2"/>}
+
             </div>
+
             <div className="space-y-4 w-full">
+
                 <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+
                     {MONTH_NAMES[data.month1]} {data.year1} - {MONTH_NAMES[data.month2]} {data.year2}
+
                 </div>
+
+                
+
                 <div className="flex flex-col items-center justify-center py-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-400 mb-1">{weightedLabel}</span>
+
+                    <span className="text-sm text-gray-600 dark:text-gray-400 mb-1 flex items-center justify-center">
+
+                        {weightedLabel}
+
+                        <Tooltip text={tooltip} />
+
+                    </span>
+
                     <div className="text-4xl font-black text-indigo-600 dark:text-indigo-400">
+
                         %<CountUp end={Math.abs(result.weightedChange)} />
+
                     </div>
+
                 </div>
+
+
+
                 <div className="pt-2 border-t dark:border-slate-700">
+
                     <div className="text-[10px] text-gray-400 dark:text-gray-500 uppercase">{valueType} Değişimi</div>
+
                     <div className="text-lg font-bold dark:text-white opacity-80">
+
                         %<CountUp end={Math.abs(result.change)} />
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
     );
+
 }
 
 function LoginComponent({ onLogin, error }: any) {
@@ -357,23 +402,35 @@ function App() {
                         {Object.keys(results).length > 0 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <ResultCard title="Yakıt (Mazot) Fiyatı" data={inputs.fuel} result={results.fuel} color="orange" valueType="fiyat" weightedLabel="Ağırlıklı Yakıt" />
-                                    <ResultCard title="TÜFE" data={inputs.tufe} result={results.tufe} color="blue" valueType="endeks" weightedLabel="Ağırlıklı TÜFE" />
-                                    <ResultCard title="Asgari Ücret" data={inputs.wage} result={results.wage} color="green" valueType="ücret" weightedLabel="Ağırlıklı Maaş" />
+                                    <ResultCard title="Yakıt (Mazot) Fiyatı" data={inputs.fuel} result={results.fuel} color="orange" valueType="fiyat" weightedLabel="Ağırlıklı Yakıt" tooltip={`Toplam değişimin %${(appData?.WEIGHTS.fuel * 100).toFixed(0)}'ini oluşturur.`} />
+                                    <ResultCard title="TÜFE" data={inputs.tufe} result={results.tufe} color="blue" valueType="endeks" weightedLabel="Ağırlıklı TÜFE" tooltip={`Toplam değişimin %${(appData?.WEIGHTS.tufe * 100).toFixed(0)}'ini oluşturur.`} />
+                                    <ResultCard title="Asgari Ücret" data={inputs.wage} result={results.wage} color="green" valueType="ücret" weightedLabel="Ağırlıklı Maaş" tooltip={`Toplam değişimin %${(appData?.WEIGHTS.wage * 100).toFixed(0)}'ini oluşturur.`} />
                                 </div>
                                 <div className="bg-white dark:bg-slate-800 p-4 sm:p-8 rounded-2xl shadow-xl border-2 border-indigo-500 text-center">
                                     <h2 className="text-xl sm:text-2xl font-bold dark:text-white mb-2">Toplam Ağırlıklı Değişim</h2>
                                     <div className="text-4xl sm:text-6xl font-black text-indigo-600 dark:text-indigo-400 mb-6">%<CountUp end={totalChange} /></div>
                                     <div className="overflow-x-auto -mx-4 sm:mx-0 px-4">
-                                        <table className="w-full text-left dark:text-gray-300 text-xs sm:text-base min-w-[300px]">
-                                            <thead><tr className="border-b dark:border-slate-700"><th>Bilet Türü</th><th className="text-right whitespace-nowrap">Mevcut</th><th className="text-right whitespace-nowrap">Yeni</th></tr></thead>
-                                            <tbody>{appData?.TICKET_TYPES.map((t: any) => (
-                                                <tr key={t.id} className="border-b dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                                                    <td className="py-3">{t.name}</td>
-                                                    <td className="text-right">₺{t.price}</td>
-                                                    <td className="text-right font-bold text-indigo-600 dark:text-indigo-400">₺<CountUp end={t.price * (1 + totalChange/100)} /></td>
+                                        <table className="w-full text-left dark:text-gray-300 text-xs sm:text-base min-w-[450px]">
+                                            <thead>
+                                                <tr className="border-b dark:border-slate-700">
+                                                    <th className="py-2">Bilet Türü</th>
+                                                    <th className="text-right">Mevcut</th>
+                                                    <th className="text-right">Yeni</th>
+                                                    <th className="text-right text-indigo-500">Artış (TL)</th>
                                                 </tr>
-                                            ))}</tbody>
+                                            </thead>
+                                            <tbody>{appData?.TICKET_TYPES.map((t: any) => {
+                                                const newPrice = t.price * (1 + totalChange/100);
+                                                const diff = newPrice - t.price;
+                                                return (
+                                                    <tr key={t.id} className="border-b dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                                        <td className="py-3">{t.name}</td>
+                                                        <td className="text-right">₺{t.price.toFixed(2)}</td>
+                                                        <td className="text-right font-bold text-indigo-600 dark:text-indigo-400">₺<CountUp end={newPrice} /></td>
+                                                        <td className="text-right text-sm text-indigo-500 font-medium">+₺{diff.toFixed(2)}</td>
+                                                    </tr>
+                                                );
+                                            })}</tbody>
                                         </table>
                                     </div>
                                     <button onClick={() => window.print()} className="mt-8 w-full sm:w-auto bg-emerald-600 text-white px-8 py-3 rounded-lg font-bold print:hidden shadow-lg hover:bg-emerald-700 transition-colors">PDF Yazdır</button>
