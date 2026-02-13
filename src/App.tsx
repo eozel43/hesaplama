@@ -293,15 +293,22 @@ function ResultCard({ title, data, result, valueType, weightedLabel, color, tool
 
 function LoginComponent({ onLogin, error }: any) {
     const [u, setU] = useState(''); const [p, setP] = useState('');
+    
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onLogin(u, p);
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-white dark:bg-slate-800 p-8 rounded-xl shadow-xl border dark:border-slate-700 text-center">
-                <img src={logo} className="w-16 mx-auto mb-4" /><h2 className="text-2xl font-bold dark:text-white mb-6">EŞEL MOBİL GİRİŞ</h2>
-                <input type="text" placeholder="Kullanıcı Adı" value={u} onChange={e => setU(e.target.value)} className="w-full mb-4 p-3 border dark:border-slate-700 dark:bg-slate-900 dark:text-white rounded-lg" />
-                <input type="password" placeholder="Şifre" value={p} onChange={e => setP(e.target.value)} className="w-full mb-6 p-3 border dark:border-slate-700 dark:bg-slate-900 dark:text-white rounded-lg" />
-                {error && <p className="text-red-500 mb-4">{error}</p>}
-                <button onClick={() => onLogin(u, p)} className="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold">Giriş Yap</button>
-            </div>
+            <form onSubmit={handleSubmit} className="max-w-md w-full bg-white dark:bg-slate-800 p-8 rounded-xl shadow-xl border dark:border-slate-700 text-center">
+                <img src={logo} className="w-20 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold dark:text-white mb-6">EŞEL MOBİL GİRİŞ</h2>
+                <input type="text" placeholder="Kullanıcı Adı" value={u} onChange={e => setU(e.target.value)} className="w-full mb-4 p-3 border dark:border-slate-700 dark:bg-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                <input type="password" placeholder="Şifre" value={p} onChange={e => setP(e.target.value)} className="w-full mb-6 p-3 border dark:border-slate-700 dark:bg-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                {error && <p className="text-red-500 mb-4 bg-red-50 dark:bg-red-900/20 py-2 rounded">{error}</p>}
+                <button type="submit" className="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 active:scale-[0.98] transition-all">Giriş Yap</button>
+            </form>
         </div>
     );
 }
@@ -375,10 +382,10 @@ function App() {
             <div className="max-w-4xl mx-auto">
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-6 sm:mb-8 print:hidden">
                     <div className="flex gap-2">
-                        {auth.isAdmin && <button onClick={() => setView(view === 'calc' ? 'admin' : 'calc')} className="bg-white dark:bg-slate-800 p-2 rounded-lg shadow text-sm sm:text-base dark:text-white">{view === 'calc' ? 'Yönetim' : 'Hesapla'}</button>}
-                        <button onClick={() => { setIsDark(!isDark); document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', isDark ? 'light' : 'dark'); }} className="bg-white dark:bg-slate-800 p-2 rounded-lg shadow">{isDark ? '☀️' : '🌙'}</button>
+                        {auth.isAdmin && <button onClick={() => setView(view === 'calc' ? 'admin' : 'calc')} className="bg-white dark:bg-slate-800 px-4 py-2 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 text-sm sm:text-base dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors font-medium">{view === 'calc' ? 'Yönetim Paneli' : 'Hesaplama Ekranı'}</button>}
+                        <button onClick={() => { setIsDark(!isDark); document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', isDark ? 'light' : 'dark'); }} className="bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">{isDark ? '☀️' : '🌙'}</button>
                     </div>
-                    <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="text-red-500 font-bold text-sm sm:text-base">Çıkış</button>
+                    <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-2 rounded-lg border border-red-200 dark:border-red-800/50 font-bold text-sm sm:text-base hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white transition-all shadow-sm active:scale-95">Çıkış Yap</button>
                 </div>
 
                 {view === 'admin' ? <AdminPanel data={appData} onUpdate={d => { setAppData(d); localStorage.setItem('appConstants', JSON.stringify(d)); }} /> : (
