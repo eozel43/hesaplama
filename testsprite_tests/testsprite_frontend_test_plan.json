@@ -1,0 +1,37 @@
+  "testPlan": {
+    "id": "frontend-smoke-001",
+    "title": "Frontend smoke tests",
+    "description": "Minimal frontend tests for the App UI (smoke)",
+  {
+    "testPlan": {
+      "id": "frontend-smoke-001",
+      "title": "Frontend smoke tests",
+      "description": "Minimal frontend tests for the App UI (smoke)",
+      "steps": [
+        { "id": "step-1", "action": "goto", "url": "http://localhost:5173/" },
+        { "id": "step-2", "action": "waitForSelector", "selector": "text=Giriş Yap" },
+        { "id": "step-3", "action": "assertVisible", "selector": "button:has-text(\"Giriş Yap\")" }
+      ]
+    },
+    "tests": [
+      {
+        "id": "smoke-01",
+        "title": "Load app root and show login",
+        "steps": [
+          { "action": "goto", "url": "http://localhost:5173/" },
+          { "action": "waitForSelector", "selector": "text=Giriş Yap" },
+          { "action": "assertVisible", "selector": "button:has-text(\"Giriş Yap\")" }
+        ]
+      }
+    ]
+  }
+      "id": "smoke-01",
+      "title": "Load app root and show login",
+      "steps": [
+        { "action": "goto", "url": "http://localhost:5173/" },
+        { "action": "waitForSelector", "selector": "text=Giri\u015f Yap" },
+        { "action": "assertVisible", "selector": "text=Kullan\u0131c\u0131 Ad\u0131" }
+      ]
+    }
+  ]
+}
