@@ -303,11 +303,17 @@ function LoginComponent({ onLogin, error }: any) {
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
             <form onSubmit={handleSubmit} className="max-w-md w-full bg-white dark:bg-slate-800 p-8 rounded-xl shadow-xl border dark:border-slate-700 text-center">
                 <img src={logo} className="w-20 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold dark:text-white mb-6">EŞEL MOBİL GİRİŞ</h2>
+                <div className="mb-6">
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ULAŞIM HİZMETLERİ MÜDÜRLÜĞÜ</p>
+                    <h2 className="text-2xl font-bold dark:text-white uppercase">EŞEL MOBİL SİSTEMİ</h2>
+                </div>
                 <input type="text" placeholder="Kullanıcı Adı" value={u} onChange={e => setU(e.target.value)} className="w-full mb-4 p-3 border dark:border-slate-700 dark:bg-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
                 <input type="password" placeholder="Şifre" value={p} onChange={e => setP(e.target.value)} className="w-full mb-6 p-3 border dark:border-slate-700 dark:bg-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
                 {error && <p className="text-red-500 mb-4 bg-red-50 dark:bg-red-900/20 py-2 rounded">{error}</p>}
                 <button type="submit" className="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 active:scale-[0.98] transition-all">Giriş Yap</button>
+                <div className="mt-8 text-left border-t dark:border-slate-700 pt-4">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 italic">© 2026 Kütahya Belediyesi. Tüm Hakları saklıdır.</p>
+                </div>
             </form>
         </div>
     );
@@ -354,6 +360,18 @@ function App() {
     };
 
     const calculate = () => {
+        const validateDates = (data: any) => {
+            if (!data.year1 || !data.month1 || !data.year2 || !data.month2) return true; // Let the 'missing data' check handle this
+            const d1 = parseInt(data.year1) * 12 + parseInt(data.month1);
+            const d2 = parseInt(data.year2) * 12 + parseInt(data.month2);
+            return d2 > d1;
+        };
+
+        if (!validateDates(inputs.fuel) || !validateDates(inputs.tufe) || !validateDates(inputs.wage)) {
+            alert('İkinci dönem tarihi, birinci dönem tarihinden sonra olmalıdır!');
+            return;
+        }
+
         const calc = (data: any, w: number) => {
             const v1 = parseFloat(data.value1), v2 = parseFloat(data.value2);
             if (!v1 || !v2) return { isValid: false, error: 'Eksik veri' };
