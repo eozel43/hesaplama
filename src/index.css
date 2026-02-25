@@ -2,44 +2,316 @@
 @tailwind components;
 @tailwind utilities;
 
-@media print {
-  @page {
-    size: A4;
-    margin: 1cm;
+@layer base {
+  :root {
+    --bg-dark: #0f1115;
+    --bg-panel: #16181d;
+    --accent-orange: #FF4D4D;
+    --accent-blue: #10B981;
+    --accent-green: #3B82F6;
+  }
+
+  html {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .display-font,
+  .font-black,
+  .font-bold {
+    font-family: 'Outfit', sans-serif;
   }
 
   body {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    background-color: white !important;
-    font-size: 10pt !important;
+    @apply bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500/30;
   }
 
-  /* Gereksiz alanları gizle */
-  nav, .print\:hidden, button, form {
+  html.dark body {
+    background-color: var(--bg-dark);
+    color: #e2e8f0;
+  }
+}
+
+@layer utilities {
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 100px 100px;
+    opacity: 0.03;
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .glass-panel {
+    @apply relative overflow-hidden bg-white/70 shadow-lg border border-white/20 backdrop-blur-md;
+  }
+
+  .dark .glass-panel {
+    background-color: rgba(22, 24, 29, 0.7);
+    border-color: rgba(255, 255, 255, 0.05);
+    @apply shadow-2xl;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 5mm;
+  }
+
+  body,
+  html {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background-color: #ffffff !important;
+  }
+
+  /* Reset framer motion and fix rendering bugs */
+  .bg-noise {
     display: none !important;
   }
 
+  .glass-panel,
+  .dark .glass-panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Force framer motion inline styles to display in print */
+  [style*="opacity: 0"],
+  [style*="opacity:0"],
+  [style*="translate"] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Force display none for print:hidden overriding flex/block utilities */
+  .print\:hidden {
+    display: none !important;
+  }
+
+
+  /* Force light mode colors for text in print to override active dark mode */
+  .dark\:text-white {
+    color: #1e293b !important;
+  }
+
+  .dark\:text-slate-400 {
+    color: #64748b !important;
+  }
+
+  .dark\:text-slate-300 {
+    color: #475569 !important;
+  }
+
+  .dark\:text-slate-200 {
+    color: #334155 !important;
+  }
+
+  .dark\:bg-white\/5 {
+    background-color: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  /* Force borders and visibility for form inputs over border-none classes */
+  input,
+  select,
+  button {
+    background-color: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .bg-black\/5 {
+    background-color: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  .dark\:border-white\/5 {
+    border-color: #e2e8f0 !important;
+  }
+
+  .dark\:bg-indigo-500 {
+    background-color: #4f46e5 !important;
+  }
+
   /* Boşlukları daralt */
-  .py-8 { padding-top: 0 !important; padding-bottom: 0 !important; }
-  .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem !important; }
-  .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem !important; }
-  .mt-12 { margin-top: 1.5rem !important; }
-  .p-8 { padding: 1rem !important; }
-  .p-6 { padding: 0.75rem !important; }
+  .py-8 {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
 
-  /* Başlıkları küçült */
-  h1 { font-size: 1.5rem !important; margin-bottom: 0.5rem !important; }
-  h2 { font-size: 1.2rem !important; }
-  .text-6xl { font-size: 3rem !important; }
+  .space-y-8> :not([hidden])~ :not([hidden]) {
+    margin-top: 0.5rem !important;
+  }
 
-  /* Tabloyu optimize et */
-  table { font-size: 9pt !important; }
-  td, th { padding: 0.25rem 0.5rem !important; }
+  .space-y-6> :not([hidden])~ :not([hidden]) {
+    margin-top: 0.25rem !important;
+  }
 
-  .max-w-4xl {
+  .mt-12 {
+    margin-top: 1rem !important;
+  }
+
+  .p-8,
+  .sm\:p-8 {
+    padding: 0.5rem !important;
+  }
+
+  .p-6 {
+    padding: 0.5rem !important;
+  }
+
+  .p-3,
+  .p-4,
+  .sm\:p-4 {
+    padding: 0.25rem 0.5rem !important;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  /* Tablo ve kaplar için optimize et */
+  .overflow-y-auto {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+
+  .min-h-screen,
+  .h-full,
+  .flex-grow,
+  .sticky {
+    position: static !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  /* Başlıkları küçült, metin boyutlarını daralt */
+  .text-6xl,
+  .sm\:text-7xl {
+    font-size: 2.5rem !important;
+  }
+
+  .text-lg,
+  .sm\:text-xl,
+  .text-xl {
+    font-size: 0.9rem !important;
+  }
+
+  .text-base {
+    font-size: 0.8rem !important;
+  }
+
+  .text-sm {
+    font-size: 0.7rem !important;
+  }
+
+  .text-xs {
+    font-size: 0.6rem !important;
+  }
+
+  .text-\[10px\] {
+    font-size: 0.55rem !important;
+  }
+
+  /* CSS Transform scaling cuts off content inside Print Media - use Zoom instead */
+  .max-w-\[1400px\] {
+    zoom: 0.8 !important;
     max-width: 100% !important;
     width: 100% !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+
+  /* Extremely critical: root and containers cannot be hidden otherwise Chrome clips the page layout completely */
+  .overflow-hidden {
+    overflow: visible !important;
+  }
+
+  .mb-6 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .mb-2 {
+    margin-bottom: 0.2rem !important;
+  }
+
+  .mb-8 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Grid Layout Enforcement on Print */
+  .grid {
+    display: grid !important;
+  }
+
+  .flex {
+    display: flex !important;
+  }
+
+  .lg\:grid-cols-12 {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+
+  .md\:grid-cols-2 {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .sm\:grid-cols-3 {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .sm\:flex-row {
+    flex-direction: row !important;
+  }
+
+  .lg\:col-span-12 {
+    grid-column: span 12 / span 12 !important;
+  }
+
+  .lg\:col-span-8 {
+    grid-column: span 8 / span 8 !important;
+  }
+
+  .lg\:col-span-4 {
+    grid-column: span 4 / span 4 !important;
+  }
+
+  /* Additional text scaling for individual ResultCards */
+  .text-4xl,
+  .sm\:text-5xl,
+  .text-5xl {
+    font-size: 1.5rem !important;
+  }
+
+  .text-2xl,
+  .text-3xl {
+    font-size: 1.1rem !important;
+  }
+
+  /* Scale down gap in ResultCard grid */
+  .gap-6 {
+    gap: 0.5rem !important;
+  }
+
+  .gap-3 {
+    gap: 0.25rem !important;
   }
 }
