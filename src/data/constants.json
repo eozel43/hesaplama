@@ -1,12 +1,35 @@
 {
   "TUIK_MOCK_DATA": {
-    "2024-01": 62.33, "2024-02": 65.15, "2024-03": 67.21, "2024-04": 69.35,
-    "2024-05": 71.68, "2024-06": 72.86, "2024-07": 75.21, "2024-08": 77.07, "2024-09": 79.36, "2024-10": 81.64, "2024-11": 83.48, "2024-12": 84.33,
-    "2025-01": 88.58, "2025-02": 90.59, "2025-03": 92.82, "2025-04": 95.60, "2025-05": 97.06, "2025-06": 98.40, "2025-07": 100.42, "2025-08": 102.47,
-    "2025-09": 105.78, "2025-10": 108.48, "2025-11": 109.42, "2025-12": 110.39, "2026-01": 115.73
+    "2024-01": 62.33,
+    "2024-02": 65.15,
+    "2024-03": 67.21,
+    "2024-04": 69.35,
+    "2024-05": 71.68,
+    "2024-06": 72.86,
+    "2024-07": 75.21,
+    "2024-08": 77.07,
+    "2024-09": 79.36,
+    "2024-10": 81.64,
+    "2024-11": 83.48,
+    "2024-12": 84.33,
+    "2025-01": 88.58,
+    "2025-02": 90.59,
+    "2025-03": 92.82,
+    "2025-04": 95.60,
+    "2025-05": 97.06,
+    "2025-06": 98.40,
+    "2025-07": 100.42,
+    "2025-08": 102.47,
+    "2025-09": 105.78,
+    "2025-10": 108.48,
+    "2025-11": 109.42,
+    "2025-12": 110.39,
+    "2026-01": 115.73,
+    "2026-02": 119.16
   },
   "ASGARI_UCRET_MOCK_DATA": {
-    "2025": 22104, "2026": 28075
+    "2025": 22104,
+    "2026": 28075
   },
   "WEIGHTS": {
     "fuel": 0.34,
@@ -14,14 +37,51 @@
     "wage": 0.33
   },
   "TICKET_TYPES": [
-    { "id": "tam", "name": "Tam Bilet", "price": 30.00 },
-    { "id": "basin", "name": "Basın Kartı Biniş", "price": 20.00 },
-    { "id": "ilkokul_lise", "name": "İlkokul-Lise Biniş", "price": 17.00 },
-    { "id": "kredi_karti", "name": "Kredi Kartı Biniş", "price": 30.00, "note": "(+ Komisyon Ücreti)" },
-    { "id": "nfc_qr", "name": "NFC-QR Biniş", "price": 38.00 },
-    { "id": "uni_ogrenci", "name": "Üniversite Öğrenci Biniş", "price": 24.00 },
-    { "id": "uni_ikamet", "name": "Üniversite İkamet Kart Biniş", "price": 22.00 },
-    { "id": "uni_hat16", "name": "Üniversite Öğr. 16 No.lu Hat", "price": 12.00 },
-    { "id": "aktarma", "name": "Aktarma", "price": 10.00 }
+    {
+      "id": "tam",
+      "name": "Tam Bilet",
+      "price": 30.00
+    },
+    {
+      "id": "basin",
+      "name": "Basın Kartı Biniş",
+      "price": 20.00
+    },
+    {
+      "id": "ilkokul_lise",
+      "name": "İlkokul-Lise Biniş",
+      "price": 17.00
+    },
+    {
+      "id": "kredi_karti",
+      "name": "Kredi Kartı Biniş",
+      "price": 30.00,
+      "note": "(+ Komisyon Ücreti)"
+    },
+    {
+      "id": "nfc_qr",
+      "name": "NFC-QR Biniş",
+      "price": 38.00
+    },
+    {
+      "id": "uni_ogrenci",
+      "name": "Üniversite Öğrenci Biniş",
+      "price": 24.00
+    },
+    {
+      "id": "uni_ikamet",
+      "name": "Üniversite İkamet Kart Biniş",
+      "price": 22.00
+    },
+    {
+      "id": "uni_hat16",
+      "name": "Üniversite Öğr. 16 No.lu Hat",
+      "price": 12.00
+    },
+    {
+      "id": "aktarma",
+      "name": "Aktarma",
+      "price": 10.00
+    }
   ]
 }
