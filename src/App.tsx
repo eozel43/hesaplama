@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../image_3ab9b2f9-e025-42e7-aa6b-8255c6443aaf.png';
 import constants from './data/constants.json';
+import TarifeDengeleme from './TarifeDengeleme';
 
 const { TUIK_MOCK_DATA: INITIAL_TUIK, ASGARI_UCRET_MOCK_DATA: INITIAL_WAGE, WEIGHTS: INITIAL_WEIGHTS, TICKET_TYPES: INITIAL_TICKETS } = constants as any;
 
@@ -305,7 +306,7 @@ function LoginComponent({ onLogin, error }: any) {
 
 function App() {
     const [appData, setAppData] = useState(INITIAL_TUIK ? { TUIK_MOCK_DATA: INITIAL_TUIK, ASGARI_UCRET_MOCK_DATA: INITIAL_WAGE, WEIGHTS: INITIAL_WEIGHTS, TICKET_TYPES: INITIAL_TICKETS } : null);
-    const [view, setView] = useState<'calc' | 'admin'>('calc');
+    const [view, setView] = useState<'calc' | 'admin' | 'dengeleme'>('calc');
     const [isDark, setIsDark] = useState(false);
     const [auth, setAuth] = useState({ isAuth: false, isAdmin: false });
     const [inputs, setInputs] = useState<any>({ fuel: { ...INITIAL_DATA_STATE }, tufe: { ...INITIAL_DATA_STATE }, wage: { ...INITIAL_DATA_STATE } });
@@ -407,7 +408,9 @@ function App() {
                     </div>
 
                     <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-end print:hidden">
-                        {auth.isAdmin && <button onClick={() => setView(view === 'calc' ? 'admin' : 'calc')} className="bg-white/80 dark:bg-white/10 px-6 py-2 rounded-xl font-bold text-sm dark:text-white hover:bg-white dark:hover:bg-white/20 transition-all">{view === 'calc' ? 'Yönetim Paneli' : 'Hesaplama Ekranı'}</button>}
+                        <button onClick={() => setView('calc')} className={`px-4 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm dark:text-white transition-all ${view === 'calc' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20'}`}>Hesaplama Ekranı</button>
+                        <button onClick={() => setView('dengeleme')} className={`px-4 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm dark:text-white transition-all ${view === 'dengeleme' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20'}`}>Tarife Dengeleme</button>
+                        {auth.isAdmin && <button onClick={() => setView('admin')} className={`px-4 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm dark:text-white transition-all ${view === 'admin' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20'}`}>Yönetim Paneli</button>}
                         <button onClick={() => { setIsDark(!isDark); document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', isDark ? 'light' : 'dark'); }} className="bg-white/80 dark:bg-white/10 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white dark:hover:bg-white/20 transition-all">{isDark ? <Sun className="w-4 h-4 text-white" /> : <Moon className="w-4 h-4" />}</button>
                         <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-red-500/10 text-red-600 dark:text-red-400 px-6 py-2 rounded-xl font-bold text-sm hover:bg-red-500 hover:text-white transition-all">Çıkış</button>
                     </div>
@@ -416,6 +419,8 @@ function App() {
                 <AnimatePresence mode="wait">
                     {view === 'admin' ? (
                         <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><AdminPanel data={appData} onUpdate={d => { setAppData(d); localStorage.setItem('appConstants', JSON.stringify(d)); }} /></motion.div>
+                    ) : view === 'dengeleme' ? (
+                        <motion.div key="dengeleme" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}><TarifeDengeleme defaultIncreaseRate={totalChange > 0 ? totalChange : 0} /></motion.div>
                     ) : (
                         <motion.div key="calc" variants={staggerContainer} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-12 gap-8 print:flex print:flex-col print:opacity-100 print:transform-none">
 
