@@ -426,7 +426,7 @@ function App() {
 
                             {/* INFORMATION NOTE */}
                             <motion.div variants={fadeUp} className="lg:col-span-12 mb-4 text-[10px] sm:text-xs font-medium text-slate-500 bg-black/5 dark:bg-white/5 p-4 rounded-xl border border-black/5 dark:border-white/5 text-center leading-relaxed print:hidden">
-                                En son hesaplama tarihi: 05.01.2026, Dikkate Alınan Yakıt Tutarı: 56,14 TL (Lukoil), Meclis Tarihi: 07.01.2026 tarih ve 3 sayılı meclis kararı; Zamlı tarife uygulama tarihi: 14.01.2026; (TÜFE 2025=100)
+                                En son hesaplama tarihi: 01.04.2026, Dikkate Alınan Yakıt Tutarı: 79,30 TL (Aytemiz), Meclis Tarihi: 01.04.2026 tarih ve .. sayılı meclis kararı; Zamlı tarife uygulama tarihi: .....2026; (TÜFE 2025=100)
                             </motion.div>
 
                             {/* LEFT PANEL - INPUTS & RESULTS */}
