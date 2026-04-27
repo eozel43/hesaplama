@@ -25,7 +25,8 @@
     "2025-11": 109.42,
     "2025-12": 110.39,
     "2026-01": 115.73,
-    "2026-02": 119.16
+    "2026-02": 119.16,
+    "2026-03": 121.47
   },
   "ASGARI_UCRET_MOCK_DATA": {
     "2025": 22104,
@@ -40,48 +41,47 @@
     {
       "id": "tam",
       "name": "Tam Bilet",
-      "price": 30.00
+      "price": 35.00
     },
     {
       "id": "basin",
       "name": "Basın Kartı Biniş",
-      "price": 20.00
+      "price": 23.30
     },
     {
       "id": "ilkokul_lise",
       "name": "İlkokul-Lise Biniş",
-      "price": 17.00
+      "price": 19.80
     },
     {
       "id": "kredi_karti",
       "name": "Kredi Kartı Biniş",
-      "price": 30.00,
-      "note": "(+ Komisyon Ücreti)"
+      "price": 42.00
     },
     {
       "id": "nfc_qr",
       "name": "NFC-QR Biniş",
-      "price": 38.00
+      "price": 44.5
     },
     {
       "id": "uni_ogrenci",
       "name": "Üniversite Öğrenci Biniş",
-      "price": 24.00
+      "price": 28.00
     },
     {
       "id": "uni_ikamet",
       "name": "Üniversite İkamet Kart Biniş",
-      "price": 22.00
+      "price": 25.70
     },
     {
       "id": "uni_hat16",
       "name": "Üniversite Öğr. 16 No.lu Hat",
-      "price": 12.00
+      "price": 14.00
     },
     {
       "id": "aktarma",
       "name": "Aktarma",
-      "price": 10.00
+      "price": 11.70
     }
   ]
 }

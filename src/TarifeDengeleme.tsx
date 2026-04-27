@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react"; 
 
 // --- Stil Tanımlamaları ---
 const cardStyle = {
@@ -71,15 +71,15 @@ const tdStyle = {
 // --- Veri ve Yardımcı Fonksiyonlar ---
 // YENİ: x3 çarpanı kaldırıldı, doğrudan aylık ortalama değerlere dönüldü.
 const INITIAL_TARIFFS = [
-  { id: "tam", name: "Tam Biniş", boardings: 710367, currentPrice: 30, manualExtra: 0, include: true, locked: false, isFixed: false },
-  { id: "basin", name: "Basın Kartı", boardings: 34, currentPrice: 20, manualExtra: 0, include: true, locked: false, isFixed: false },
-  { id: "ilkokul", name: "İlkokul-Lise", boardings: 287734, currentPrice: 17, manualExtra: 0, include: true, locked: false, isFixed: false },
-  { id: "kredi", name: "Kredi Kartı", boardings: 158909, currentPrice: 30, manualExtra: 0, include: true, locked: false, isFixed: false },
-  { id: "nfc", name: "NFC-QR", boardings: 55756, currentPrice: 38, manualExtra: 0, include: true, locked: false, isFixed: false },
-  { id: "universite", name: "Üniversite Öğrenci", boardings: 339240, currentPrice: 24, manualExtra: 0, include: true, locked: false, isFixed: false },
-  { id: "ikamet", name: "İkametgah Kartı", boardings: 26723, currentPrice: 22, manualExtra: 0, include: true, locked: false, isFixed: false },
-  { id: "ogr16", name: "16 Numara Öğrenci", boardings: 42663, currentPrice: 12, manualExtra: 0, include: true, locked: false, isFixed: false },
-  { id: "aktarma", name: "Aktarma", boardings: 33195, currentPrice: 10, manualExtra: 0, include: true, locked: false, isFixed: false },
+  { id: "tam", name: "Tam Biniş", boardings: 710367, currentPrice: 35, manualExtra: 0, include: true, locked: false, isFixed: false },
+  { id: "basin", name: "Basın Kartı", boardings: 34, currentPrice: 23.3, manualExtra: 0, include: true, locked: false, isFixed: false },
+  { id: "ilkokul", name: "İlkokul-Lise", boardings: 287734, currentPrice: 19.8, manualExtra: 0, include: true, locked: false, isFixed: false },
+  { id: "kredi", name: "Kredi Kartı", boardings: 158909, currentPrice: 42, manualExtra: 0, include: true, locked: false, isFixed: false },
+  { id: "nfc", name: "NFC-QR", boardings: 55756, currentPrice: 44.5, manualExtra: 0, include: true, locked: false, isFixed: false },
+  { id: "universite", name: "Üniversite Öğrenci", boardings: 339240, currentPrice: 28, manualExtra: 0, include: true, locked: false, isFixed: false },
+  { id: "ikamet", name: "İkametgah Kartı", boardings: 26723, currentPrice: 25.7, manualExtra: 0, include: true, locked: false, isFixed: false },
+  { id: "ogr16", name: "16 Numara Öğrenci", boardings: 42663, currentPrice: 14, manualExtra: 0, include: true, locked: false, isFixed: false },
+  { id: "aktarma", name: "Aktarma", boardings: 33195, currentPrice: 11.7, manualExtra: 0, include: true, locked: false, isFixed: false },
 ];
 
 function fmtCurrency(v: any) {

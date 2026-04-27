@@ -426,7 +426,8 @@ function App() {
 
                             {/* INFORMATION NOTE */}
                             <motion.div variants={fadeUp} className="lg:col-span-12 mb-4 text-[10px] sm:text-xs font-medium text-slate-500 bg-black/5 dark:bg-white/5 p-4 rounded-xl border border-black/5 dark:border-white/5 text-center leading-relaxed print:hidden">
-                                En son hesaplama tarihi: 01.04.2026, Dikkate Alınan Yakıt Tutarı: 79,30 TL (Aytemiz), Meclis Tarihi: 01.04.2026 tarih ve .. sayılı meclis kararı; Zamlı tarife uygulama tarihi: .....2026; (TÜFE 2025=100)
+                                <p>En son hesaplama tarihi: 01.04.2026, Dikkate Alınan Yakıt Tutarı: 79,30 TL (Aytemiz), Meclis Tarihi: 01.04.2026 tarih ve 143 sayılı meclis kararı; Zamlı tarife uygulama tarihi: 08.04.2026; (TÜFE 2025=100)</p>
+                                <p className="mt-2 text-indigo-600 dark:text-indigo-400 font-semibold">01.04.2026 tarihli ve 143 sayılı Belediye Meclis kararına istinaden, hesaplanan tarife bedellerinde küsuratın 0,5 ve üzerinde olması durumunda bir üst tam TL'ye, 0,5 TL'nin altında olması durumunda ise bir alt tam TL'ye yuvarlanması gerekmektedir.</p>
                             </motion.div>
 
                             {/* LEFT PANEL - INPUTS & RESULTS */}
@@ -473,17 +474,24 @@ function App() {
                                             <div className="overflow-y-auto custom-scrollbar flex-grow pr-2">
                                                 <div className="space-y-3">
                                                     {appData?.TICKET_TYPES.map((t: any) => {
-                                                        const newPrice = t.price * (1 + totalChange / 100);
+                                                        const rawPrice = t.price * (1 + totalChange / 100);
+                                                        const newPrice = Math.round(rawPrice);
                                                         const diff = newPrice - t.price;
+                                                        const percentChange = ((newPrice - t.price) / t.price) * 100;
                                                         return (
                                                             <motion.div key={t.id} whileHover={{ x: 4 }} className="group p-3 sm:p-4 rounded-2xl bg-black/5 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all flex justify-between items-center border border-transparent hover:border-indigo-500/20">
                                                                 <div>
                                                                     <div className="font-bold text-sm sm:text-base text-slate-800 dark:text-slate-200">{t.name}</div>
                                                                     <div className="text-[10px] sm:text-xs text-slate-400 font-medium line-through">₺{t.price.toFixed(2)}</div>
                                                                 </div>
-                                                                <div className="text-right">
-                                                                    <div className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400">₺<CountUp end={newPrice} /></div>
-                                                                    <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 mt-1">+₺{diff.toFixed(2)}</div>
+                                                                <div className="text-right flex flex-col items-end justify-center">
+                                                                    <div className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Hesaplanan: ₺{rawPrice.toFixed(2)}</div>
+                                                                    <div className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400 leading-none flex items-center">
+                                                                        ₺<CountUp end={newPrice} />
+                                                                    </div>
+                                                                    <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 mt-1 uppercase">
+                                                                        Değişim: {diff >= 0 ? '+' : ''}₺{diff.toFixed(2)} ({percentChange >= 0 ? '+' : ''}%{percentChange.toFixed(1)})
+                                                                    </div>
                                                                 </div>
                                                             </motion.div>
                                                         );
