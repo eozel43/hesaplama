@@ -314,7 +314,30 @@ function App() {
 
     React.useEffect(() => {
         const stored = localStorage.getItem('appConstants');
-        if (stored) setAppData(JSON.parse(stored));
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            let changed = false;
+            if (INITIAL_TUIK && parsed.TUIK_MOCK_DATA) {
+                for (const key of Object.keys(INITIAL_TUIK)) {
+                    if (parsed.TUIK_MOCK_DATA[key] === undefined) {
+                        parsed.TUIK_MOCK_DATA[key] = INITIAL_TUIK[key];
+                        changed = true;
+                    }
+                }
+            }
+            if (INITIAL_WAGE && parsed.ASGARI_UCRET_MOCK_DATA) {
+                for (const key of Object.keys(INITIAL_WAGE)) {
+                    if (parsed.ASGARI_UCRET_MOCK_DATA[key] === undefined) {
+                        parsed.ASGARI_UCRET_MOCK_DATA[key] = INITIAL_WAGE[key];
+                        changed = true;
+                    }
+                }
+            }
+            if (changed) {
+                localStorage.setItem('appConstants', JSON.stringify(parsed));
+            }
+            setAppData(parsed);
+        }
         const theme = localStorage.getItem('theme');
         if (theme === 'dark') { setIsDark(true); document.documentElement.classList.add('dark'); }
         if (localStorage.getItem('isAuth') === 'true') setAuth({ isAuth: true, isAdmin: localStorage.getItem('isAdmin') === 'true' });
