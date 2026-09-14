@@ -20,22 +20,9 @@ const Info = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
 );
 
-// --- ANIMATION COMPONENT ---
+// Stable numeric rendering also keeps printed values accurate.
 const CountUp = ({ end, decimals = 2, prefix = "", suffix = "" }: { end: number, decimals?: number, prefix?: string, suffix?: string }) => {
-    const [count, setCount] = React.useState(0);
-    React.useEffect(() => {
-        let startTime: number;
-        const duration = 1000;
-        const animate = (currentTime: number) => {
-            if (!startTime) startTime = currentTime;
-            const progress = Math.min((currentTime - startTime) / duration, 1);
-            const easeOutCubic = 1 - Math.pow(1 - progress, 3);
-            setCount(easeOutCubic * end);
-            if (progress < 1) requestAnimationFrame(animate);
-        };
-        requestAnimationFrame(animate);
-    }, [end]);
-    return <span>{prefix}{count.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}</span>;
+    return <span>{prefix}{end.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}</span>;
 };
 
 // --- TOOLTIP COMPONENT ---
@@ -55,6 +42,8 @@ interface CalculationData { month1: string; year1: string; value1: string; month
 type CalculationCategory = 'fuel' | 'tufe' | 'wage';
 const MONTH_NAMES = ["", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 const INITIAL_DATA_STATE: CalculationData = { month1: '', year1: '', value1: '', month2: '', year2: '', value2: '' };
+const INITIAL_FUEL_STATE: CalculationData = { ...INITIAL_DATA_STATE, month1: '9', year1: '2026', value1: '90.67' };
+const INITIAL_TUFE_STATE: CalculationData = { ...INITIAL_DATA_STATE, month1: '8', year1: '2026', value1: String(constants.TUIK_MOCK_DATA['2026-08']) };
 
 const generateYearOptions = () => {
     const currentYear = new Date().getFullYear();
@@ -185,7 +174,7 @@ function AdminPanel({ data, onUpdate }: { data: any, onUpdate: (newData: any) =>
     );
 }
 
-function InputSection({ title, data, onDataChange, color, infoLink, years }: any) {
+function InputSection({ title, data, onDataChange, color, infoLink, years, currency = false }: any) {
     const colorPairs: any = {
         orange: { border: 'border-[var(--accent-orange)]', text: 'text-[var(--accent-orange)]', bg: 'bg-[var(--accent-orange)]' },
         blue: { border: 'border-[var(--accent-blue)]', text: 'text-[var(--accent-blue)]', bg: 'bg-[var(--accent-blue)]' },
@@ -207,13 +196,13 @@ function InputSection({ title, data, onDataChange, color, infoLink, years }: any
                 </select>
             </div>
             <div className="relative">
-                <input type="number" step="0.01" value={data[`value${p}`]} onChange={e => onDataChange(`value${p}`, e.target.value)} placeholder={`Belirlenen Değer`} className="w-full bg-black/5 dark:bg-white/5 px-4 py-3 border-none text-slate-800 dark:text-white rounded-xl focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium" />
-                {color === 'orange' && <span className="absolute right-4 top-3 text-sm text-slate-400 font-bold">₺</span>}
+                <input type="number" step="0.01" value={data[`value${p}`]} onChange={e => onDataChange(`value${p}`, e.target.value)} placeholder={`Belirlenen Değer`} className={`w-full bg-black/5 dark:bg-white/5 px-4 py-3 border-none text-slate-800 dark:text-white rounded-xl focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium ${currency ? 'pr-12' : ''}`} />
+                {currency && <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-bold">₺</span>}
             </div>
         </div>
     );
     return (
-        <div className={`glass-panel rounded-2xl p-6 sm:p-8 border-l-4 ${c.border} relative overflow-hidden group`}>
+        <div className={`input-panel glass-panel ${c.border}`}>
             <div className={`absolute top-0 right-0 w-32 h-32 ${c.bg} opacity-5 blur-[60px] rounded-full point-events-none transition-opacity group-hover:opacity-10 print:hidden`} />
             <div className="mb-6 flex items-center justify-between relative z-10">
                 <h2 className={`text-xl font-bold dark:text-white flex items-center tracking-tight`}>
@@ -221,7 +210,7 @@ function InputSection({ title, data, onDataChange, color, infoLink, years }: any
                 </h2>
                 {infoLink && <a href={infoLink.url} target="_blank" className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors uppercase tracking-wider">{infoLink.text}</a>}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">{renderPeriod('1')}{renderPeriod('2')}</div>
+            <div className="period-grid">{renderPeriod('1')}{renderPeriod('2')}</div>
         </div>
     );
 }
@@ -305,11 +294,11 @@ function LoginComponent({ onLogin, error }: any) {
 }
 
 function App() {
-    const [appData, setAppData] = useState(INITIAL_TUIK ? { TUIK_MOCK_DATA: INITIAL_TUIK, ASGARI_UCRET_MOCK_DATA: INITIAL_WAGE, WEIGHTS: INITIAL_WEIGHTS, TICKET_TYPES: INITIAL_TICKETS } : null);
+    const [appData, setAppData] = useState(INITIAL_TUIK ? { TARIFF_VERSION: constants.TARIFF_VERSION, TUIK_MOCK_DATA: INITIAL_TUIK, ASGARI_UCRET_MOCK_DATA: INITIAL_WAGE, WEIGHTS: INITIAL_WEIGHTS, TICKET_TYPES: INITIAL_TICKETS } : null);
     const [view, setView] = useState<'calc' | 'admin' | 'dengeleme'>('calc');
     const [isDark, setIsDark] = useState(false);
     const [auth, setAuth] = useState({ isAuth: false, isAdmin: false });
-    const [inputs, setInputs] = useState<any>({ fuel: { ...INITIAL_DATA_STATE }, tufe: { ...INITIAL_DATA_STATE }, wage: { ...INITIAL_DATA_STATE } });
+    const [inputs, setInputs] = useState<any>({ fuel: { ...INITIAL_FUEL_STATE }, tufe: { ...INITIAL_TUFE_STATE }, wage: { ...INITIAL_DATA_STATE } });
     const [results, setResults] = useState<any>({});
 
     React.useEffect(() => {
@@ -317,6 +306,18 @@ function App() {
         if (stored) {
             const parsed = JSON.parse(stored);
             let changed = false;
+            if (parsed.TARIFF_VERSION !== constants.TARIFF_VERSION) {
+                const savedTickets = Array.isArray(parsed.TICKET_TYPES) ? parsed.TICKET_TYPES : [];
+                parsed.TICKET_TYPES = [
+                    ...INITIAL_TICKETS.map((ticket: { id: string }) => ({
+                        ...savedTickets.find((saved: { id: string }) => saved.id === ticket.id),
+                        ...ticket,
+                    })),
+                    ...savedTickets.filter((saved: { id: string }) => !INITIAL_TICKETS.some((ticket: { id: string }) => ticket.id === saved.id)),
+                ];
+                parsed.TARIFF_VERSION = constants.TARIFF_VERSION;
+                changed = true;
+            }
             if (INITIAL_TUIK && parsed.TUIK_MOCK_DATA) {
                 for (const key of Object.keys(INITIAL_TUIK)) {
                     if (parsed.TUIK_MOCK_DATA[key] === undefined) {
@@ -372,11 +373,11 @@ function App() {
             if (!data.year1 || !data.month1 || !data.year2 || !data.month2) return true; // Let the 'missing data' check handle this
             const d1 = parseInt(data.year1) * 12 + parseInt(data.month1);
             const d2 = parseInt(data.year2) * 12 + parseInt(data.month2);
-            return d2 > d1;
+            return d2 >= d1;
         };
 
         if (!validateDates(inputs.fuel) || !validateDates(inputs.tufe) || !validateDates(inputs.wage)) {
-            alert('İkinci dönem tarihi, birinci dönem tarihinden sonra olmalıdır!');
+            alert('İkinci dönem tarihi, birinci dönem tarihine eşit veya sonra olmalıdır!');
             return;
         }
 
@@ -394,7 +395,7 @@ function App() {
     };
 
     const handleReset = () => {
-        setInputs({ fuel: { ...INITIAL_DATA_STATE }, tufe: { ...INITIAL_DATA_STATE }, wage: { ...INITIAL_DATA_STATE } });
+        setInputs({ fuel: { ...INITIAL_FUEL_STATE }, tufe: { ...INITIAL_TUFE_STATE }, wage: { ...INITIAL_DATA_STATE } });
         setResults({});
     };
 
@@ -407,34 +408,34 @@ function App() {
         hidden: { opacity: 0 },
         show: {
             opacity: 1,
-            transition: { staggerChildren: 0.1 }
+            transition: { staggerChildren: 0 }
         }
     };
 
     const fadeUp = {
         hidden: { opacity: 0, y: 20 },
-        show: { opacity: 1, y: 0, transition: { ease: "easeOut" as const, duration: 0.5 } }
+        show: { opacity: 1, y: 0, transition: { ease: "easeOut" as const, duration: 0.15 } }
     };
 
     return (
-        <div className="min-h-screen relative overflow-hidden transition-colors duration-500">
+        <div className="corporate-app min-h-screen relative">
             <div className="bg-noise" />
 
             <div className="max-w-[1400px] mx-auto p-4 sm:p-8 relative z-10">
-                <header className="flex flex-col sm:flex-row gap-4 justify-between items-center sm:items-start md:items-center mb-8 sm:mb-12 backdrop-blur-md bg-white/30 dark:bg-black/20 p-4 sm:p-6 rounded-2xl border border-white/20 dark:border-white/5">
+                <header className="municipal-header">
                     <div className="flex items-center gap-4 w-full sm:w-auto justify-center sm:justify-start">
-                        <img src={logo} className="w-12 h-12 sm:w-16 sm:h-16" alt="Logo" />
+                        <img src={logo} className="w-12 h-12 sm:w-16 sm:h-16" alt="Kütahya Belediyesi" />
                         <div className="text-center sm:text-left">
-                            <h1 className="text-xl sm:text-3xl font-black dark:text-white tracking-tight">Eşel Mobil <span className="text-indigo-500">Sistemi</span></h1>
-                            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 tracking-widest mt-1">ULAŞIM HİZMETLERİ MÜDÜRLÜĞÜ</p>
+                            <p className="municipal-eyebrow">Kütahya Belediyesi</p><h1 className="municipal-title">Eşel Mobil Tarife Hesaplama Sistemi</h1>
+                            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 tracking-widest mt-1">Ulaşım Hizmetleri Müdürlüğü</p>
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-end print:hidden">
+                    <div className="municipal-nav print:hidden">
                         <button onClick={() => setView('calc')} className={`px-4 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm dark:text-white transition-all ${view === 'calc' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20'}`}>Hesaplama Ekranı</button>
                         <button onClick={() => setView('dengeleme')} className={`px-4 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm dark:text-white transition-all ${view === 'dengeleme' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20'}`}>Tarife Dengeleme</button>
                         {auth.isAdmin && <button onClick={() => setView('admin')} className={`px-4 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm dark:text-white transition-all ${view === 'admin' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20'}`}>Yönetim Paneli</button>}
-                        <button onClick={() => { setIsDark(!isDark); document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', isDark ? 'light' : 'dark'); }} className="bg-white/80 dark:bg-white/10 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white dark:hover:bg-white/20 transition-all">{isDark ? <Sun className="w-4 h-4 text-white" /> : <Moon className="w-4 h-4" />}</button>
+                        <button aria-label="Renk temasını değiştir" onClick={() => { setIsDark(!isDark); document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', isDark ? 'light' : 'dark'); }} className="bg-white/80 dark:bg-white/10 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white dark:hover:bg-white/20 transition-all">{isDark ? <Sun className="w-4 h-4 text-white" /> : <Moon className="w-4 h-4" />}</button>
                         <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-red-500/10 text-red-600 dark:text-red-400 px-6 py-2 rounded-xl font-bold text-sm hover:bg-red-500 hover:text-white transition-all">Çıkış</button>
                     </div>
                 </header>
@@ -445,23 +446,27 @@ function App() {
                     ) : view === 'dengeleme' ? (
                         <motion.div key="dengeleme" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}><TarifeDengeleme defaultIncreaseRate={totalChange > 0 ? totalChange : 0} /></motion.div>
                     ) : (
-                        <motion.div key="calc" variants={staggerContainer} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-12 gap-8 print:flex print:flex-col print:opacity-100 print:transform-none">
+                        <motion.div key="calc" variants={staggerContainer} initial="hidden" animate="show" className="calculation-layout">
 
-                            {/* INFORMATION NOTE */}
-                            <motion.div variants={fadeUp} className="lg:col-span-12 mb-4 text-[10px] sm:text-xs font-medium text-slate-500 bg-black/5 dark:bg-white/5 p-4 rounded-xl border border-black/5 dark:border-white/5 text-center leading-relaxed print:hidden">
-                                <p>En son hesaplama tarihi: 01.04.2026, Dikkate Alınan Yakıt Tutarı: 79,30 TL (Aytemiz), Meclis Tarihi: 01.04.2026 tarih ve 143 sayılı meclis kararı; Zamlı tarife uygulama tarihi: 08.04.2026; (TÜFE 2025=100)</p>
-                                <p className="mt-2 text-indigo-600 dark:text-indigo-400 font-semibold">01.04.2026 tarihli ve 143 sayılı Belediye Meclis kararına istinaden, hesaplanan tarife bedellerinde küsuratın 0,5 ve üzerinde olması durumunda bir üst tam TL'ye, 0,5 TL'nin altında olması durumunda ise bir alt tam TL'ye yuvarlanması gerekmektedir.</p>
-                            </motion.div>
-
+                            <section className="decision-band" aria-label="Hesaplamaya esas karar bilgileri">
+                                <dl>
+                                    <div><dt>Son hesaplama tarihi</dt><dd>04.09.2026</dd></div>
+                                    <div><dt>Esas yakıt fiyatı</dt><dd>90,67 TL <small>M Oil – Total</small></dd></div>
+                                    <div><dt>Encümen kararı</dt><dd>08.09.2026 <small>1576 sayılı karar</small></dd></div>
+                                    <div><dt>Tarife yürürlük tarihi</dt><dd>11.09.2026</dd></div>
+                                </dl>
+                                <p>TÜFE baz yılı: 2025 = 100</p>
+                            </section>
+                            <div className="section-heading"><span>01</span><div><h2>Hesaplama parametreleri</h2><p>Başlangıç ve bitiş dönemlerini karşılaştırarak maliyet değişimini hesaplayın.</p></div></div>
                             {/* LEFT PANEL - INPUTS & RESULTS */}
-                            <motion.div variants={fadeUp} className="lg:col-span-8 space-y-6 print:opacity-100 print:transform-none print:!translate-y-0 print:block">
-                                <div className="space-y-6 print:hidden">
-                                    <InputSection title="Yakıt (Mazot) Fiyatı" data={inputs.fuel} onDataChange={(f: any, v: any) => handleInput('fuel', f, v)} color="orange" years={years} infoLink={{ url: 'https://tppd.com.tr', text: 'TPPD' }} />
-                                    <div className="space-y-6">
+                            <motion.div variants={fadeUp} className="parameter-area space-y-6">
+                                <div className="parameter-grid">
+                                    <InputSection title="Yakıt (Mazot) Fiyatı" data={inputs.fuel} onDataChange={(f: any, v: any) => handleInput('fuel', f, v)} color="orange" currency years={years} infoLink={{ url: 'https://tppd.com.tr', text: 'TPPD' }} />
+                                    <div className="parameter-secondary">
                                         <InputSection title="Tüketici Fiyat Endeksi" data={inputs.tufe} onDataChange={(f: any, v: any) => handleInput('tufe', f, v)} color="blue" years={years} />
-                                        <InputSection title="Asgari Ücret" data={inputs.wage} onDataChange={(f: any, v: any) => handleInput('wage', f, v)} color="green" years={years} />
+                                        <InputSection title="Asgari Ücret" data={inputs.wage} onDataChange={(f: any, v: any) => handleInput('wage', f, v)} color="green" currency years={years} />
                                     </div>
-                                    <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                                    <div className="parameter-actions flex flex-col sm:flex-row gap-3 print:hidden">
                                         <button onClick={calculate} className="flex-1 bg-indigo-600 dark:bg-indigo-500 text-white p-5 rounded-2xl font-bold text-xl tracking-wide shadow-xl shadow-indigo-600/20 hover:shadow-indigo-600/40 active:scale-95 transition-all">Senaryoyu Hesapla</button>
                                         <button onClick={handleReset} className="px-8 py-5 bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-2xl font-bold tracking-wide hover:bg-black/10 dark:hover:bg-white/10 active:scale-95 transition-all">Sıfırla</button>
                                     </div>
@@ -469,64 +474,50 @@ function App() {
 
                                 {Object.keys(results).length > 0 && (
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4">
-                                        <ResultCard title="Yakıt Sonucu" data={inputs.fuel} result={results.fuel || {}} valueType="Yakıt" color="orange" weightedLabel={`Ağırlık: %${appData?.WEIGHTS.fuel}`} />
-                                        <ResultCard title="TÜFE Sonucu" data={inputs.tufe} result={results.tufe || {}} valueType="TÜFE" color="blue" weightedLabel={`Ağırlık: %${appData?.WEIGHTS.tufe}`} />
-                                        <ResultCard title="Asgari Ücret Skoru" data={inputs.wage} result={results.wage || {}} valueType="Asgari Ücret" color="green" weightedLabel={`Ağırlık: %${appData?.WEIGHTS.wage}`} />
+                                        <ResultCard title="Yakıt Sonucu" data={inputs.fuel} result={results.fuel || {}} valueType="Yakıt" color="orange" weightedLabel={`Ağırlık: %${appData!.WEIGHTS.fuel * 100}`} />
+                                        <ResultCard title="TÜFE Sonucu" data={inputs.tufe} result={results.tufe || {}} valueType="TÜFE" color="blue" weightedLabel={`Ağırlık: %${appData!.WEIGHTS.tufe * 100}`} />
+                                        <ResultCard title="Asgari Ücret Skoru" data={inputs.wage} result={results.wage || {}} valueType="Asgari Ücret" color="green" weightedLabel={`Ağırlık: %${appData!.WEIGHTS.wage * 100}`} />
                                     </div>
                                 )}
                             </motion.div>
 
                             {/* RIGHT PANEL - RESULTS */}
-                            <motion.div variants={fadeUp} className="lg:col-span-4 lg:row-span-2 print:opacity-100 print:transform-none print:!translate-y-0 print:block">
+                            <motion.div variants={fadeUp} className="calculation-output">
                                 {Object.keys(results).length > 0 ? (
-                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="sticky top-8 space-y-6 h-full flex flex-col print:opacity-100 print:transform-none print:!translate-x-0 print:block">
+                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
 
                                         {/* HERO TOTAL CARD */}
-                                        <div className="glass-panel p-6 sm:p-8 rounded-[2rem] text-center border-t-4 border-indigo-500 relative overflow-hidden flex-shrink-0 print:opacity-100 print:transform-none">
+                                        <div className="total-summary">
                                             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none print:hidden" />
-                                            <h2 className="text-xs sm:text-sm font-bold tracking-widest text-slate-500 dark:text-slate-400 mb-2 sm:mb-4">AĞIRLIKLI TOPLAM SONUÇ</h2>
-                                            <div className="text-6xl sm:text-7xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">
+                                            <h2 className="text-xs sm:text-sm font-bold tracking-widest text-slate-500 dark:text-slate-400 mb-2 sm:mb-4">Ağırlıklı toplam değişim</h2>
+                                            <div className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tighter mb-2 break-words">
                                                 {totalChange > 0 ? '+' : ''}<CountUp end={totalChange} />%
                                             </div>
                                             <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">Sistem parametrelerine göre hesaplanmış net değişim oranı.</p>
                                         </div>
 
-                                        {/* TICKET TABLE */}
-                                        <div className="glass-panel p-6 rounded-3xl flex-grow overflow-hidden flex flex-col">
-                                            <h3 className="text-sm font-bold tracking-widest text-slate-500 mb-6">TARİFE YANSIMALARI</h3>
-                                            <div className="overflow-y-auto custom-scrollbar flex-grow pr-2">
-                                                <div className="space-y-3">
-                                                    {appData?.TICKET_TYPES.map((t: any) => {
+                                        <section className="glass-panel tariff-comparison" aria-labelledby="tariff-heading">
+                                            <div className="table-heading"><div><h2 id="tariff-heading">Tarife yansımaları</h2><p>Mevcut tarife ile hesaplanan senaryonun karşılaştırması. Tutarlar TL cinsindedir.</p></div><button onClick={() => window.print()} className="primary-action print:hidden">Yazıcıya Gönder</button></div>
+                                            <p className="comparison-hint">Tüm ücretleri görmek için tabloyu sağa kaydırın.</p>
+                                            <div className="comparison-scroll" tabIndex={0} role="region" aria-label="Tarife karşılaştırma tablosu">
+                                                <table>
+                                                    <thead><tr><th scope="col">Biniş türü</th><th scope="col">Mevcut ücret</th><th scope="col">Hesaplanan ücret</th><th scope="col">Uygulanacak ücret</th><th scope="col">Değişim</th></tr></thead>
+                                                    <tbody>{appData?.TICKET_TYPES.map((t: { id: string; name: string; price: number }) => {
                                                         const rawPrice = t.price * (1 + totalChange / 100);
                                                         const newPrice = Math.round(rawPrice);
                                                         const diff = newPrice - t.price;
                                                         const percentChange = ((newPrice - t.price) / t.price) * 100;
-                                                        return (
-                                                            <motion.div key={t.id} whileHover={{ x: 4 }} className="group p-3 sm:p-4 rounded-2xl bg-black/5 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all flex justify-between items-center border border-transparent hover:border-indigo-500/20">
-                                                                <div>
-                                                                    <div className="font-bold text-sm sm:text-base text-slate-800 dark:text-slate-200">{t.name}</div>
-                                                                    <div className="text-[10px] sm:text-xs text-slate-400 font-medium line-through">₺{t.price.toFixed(2)}</div>
-                                                                </div>
-                                                                <div className="text-right flex flex-col items-end justify-center">
-                                                                    <div className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Hesaplanan: ₺{rawPrice.toFixed(2)}</div>
-                                                                    <div className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400 leading-none flex items-center">
-                                                                        ₺<CountUp end={newPrice} />
-                                                                    </div>
-                                                                    <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 mt-1 uppercase">
-                                                                        Değişim: {diff >= 0 ? '+' : ''}₺{diff.toFixed(2)} ({percentChange >= 0 ? '+' : ''}%{percentChange.toFixed(1)})
-                                                                    </div>
-                                                                </div>
-                                                            </motion.div>
-                                                        );
-                                                    })}
-                                                </div>
+                                                        const money = (value: number) => value.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                                        return <tr key={t.id}><th scope="row">{t.name}</th><td>{money(t.price)}</td><td>{money(rawPrice)}</td><td className="applied-price">{money(newPrice)}</td><td>{diff >= 0 ? '+' : ''}{money(diff)}<small>{percentChange >= 0 ? '+' : ''}%{money(percentChange)}</small></td></tr>;
+                                                    })}</tbody>
+                                                </table>
                                             </div>
-                                            <button onClick={() => window.print()} className="w-full mt-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 p-4 rounded-2xl font-bold tracking-wide shadow-xl active:scale-95 transition-all print:hidden">Yazıcıya Gönder</button>
-                                        </div>
+                                            <p className="table-footnote">Uygulanacak ücret sütunu, hesaplanan senaryonun tam TL'ye yuvarlanmış sonucudur; tek başına yeni bir tarife kararı değildir.</p>
+                                        </section>
 
                                     </motion.div>
                                 ) : (
-                                    <div className="h-full flex flex-col items-center justify-center p-12 text-center glass-panel rounded-[2rem] opacity-50 border-dashed border-2">
+                                    <div className="empty-state glass-panel">
                                         <Calculator className="w-16 h-16 text-slate-300 mb-6" />
                                         <h3 className="text-lg font-bold text-slate-400 mb-2">Sonuç Bekleniyor</h3>
                                         <p className="text-sm text-slate-500 font-medium">Maliyet değişimlerini görmek için dönemsel verileri girip senaryoyu hesaplayın.</p>
@@ -534,6 +525,16 @@ function App() {
                                 )}
                             </motion.div>
 
+                            <section aria-labelledby="calculation-notes-title" className="lg:col-span-12 rounded-xl border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 p-4 sm:p-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                                <h2 id="calculation-notes-title" className="mb-3 font-bold text-slate-800 dark:text-white">Notlar</h2>
+                                <ol className="list-decimal pl-5 space-y-2">
+                                    <li>03.09.2025 tarihli ve 247 sayılı Belediye Meclis kararına istinaden, Halk otobüsleri fiyat tarifesi değişikliklerinin Eşel Mobil Sistemine göre yapılmasına karar verilmiştir.</li>
+                                    <li>01.04.2026 tarihli ve 143 sayılı Belediye Meclis kararına istinaden, hazırlanan tarifelerin görüşülmesi ve onaylanması hususunda Belediye Encümenine yetki verilmiştir.</li>
+                                    <li>01.04.2026 tarihli ve 143 sayılı Belediye Meclis kararına istinaden, hesaplanan tarife bedellerinde küsuratın 0,5 ve üzerinde olması durumunda bir üst tam TL'ye, 0,5 TL'nin altında olması durumunda ise bir alt tam TL'ye yuvarlanması gerekmektedir.</li>
+                                    <li>EÜTS Teknik Şartnamesi kapsamında, Kart 43 sistem kartları dışındaki kartlarla yapılan binişlerde; tam biniş ücretinin 35,01 TL ile 40,00 TL arasında olması halinde, söz konusu kartlara uygulanacak ücret, tam kart ücretine 8,00 TL ilave edilerek hesaplanır.</li>
+                                    <li>Mazot maliyetinin hesaplanmasında, tabloda yer alan firmalar tarafından sunulan fiyatlar karşılaştırılmış ve hesaplamaya esas olmak üzere en düşük birim fiyat dikkate alınmıştır.</li>
+                                </ol>
+                            </section>
                         </motion.div>
                     )}
                 </AnimatePresence>

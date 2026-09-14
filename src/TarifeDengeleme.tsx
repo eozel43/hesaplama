@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react"; 
+import constants from './data/constants.json';
 
 // --- Stil Tanımlamaları ---
 const cardStyle = {
@@ -70,6 +71,7 @@ const tdStyle = {
 
 // --- Veri ve Yardımcı Fonksiyonlar ---
 // YENİ: x3 çarpanı kaldırıldı, doğrudan aylık ortalama değerlere dönüldü.
+const TICKET_IDS: Record<string, string> = { ilkokul: 'ilkokul_lise', kredi: 'kredi_karti', nfc: 'nfc_qr', universite: 'uni_ogrenci', ikamet: 'uni_ikamet', ogr16: 'uni_hat16' };
 const INITIAL_TARIFFS = [
   { id: "tam", name: "Tam Biniş", boardings: 710367, currentPrice: 35, manualExtra: 0, include: true, locked: false, isFixed: false },
   { id: "basin", name: "Basın Kartı", boardings: 34, currentPrice: 23.3, manualExtra: 0, include: true, locked: false, isFixed: false },
@@ -80,7 +82,10 @@ const INITIAL_TARIFFS = [
   { id: "ikamet", name: "İkametgah Kartı", boardings: 26723, currentPrice: 25.7, manualExtra: 0, include: true, locked: false, isFixed: false },
   { id: "ogr16", name: "16 Numara Öğrenci", boardings: 42663, currentPrice: 14, manualExtra: 0, include: true, locked: false, isFixed: false },
   { id: "aktarma", name: "Aktarma", boardings: 33195, currentPrice: 11.7, manualExtra: 0, include: true, locked: false, isFixed: false },
-];
+].map((tariff) => {
+  const ticket = constants.TICKET_TYPES.find((item) => item.id === (TICKET_IDS[tariff.id] ?? tariff.id))!;
+  return { ...tariff, currentPrice: ticket.price, name: ticket.name };
+});
 
 function fmtCurrency(v: any) {
   return new Intl.NumberFormat("tr-TR", {
@@ -379,7 +384,7 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
   const balanced = Math.abs(results.diff) < (stepSize === 0.5 ? 5 : 2);
 
   return (
-    <div
+    <div className="tariff-balancing"
       style={{
         minHeight: "100vh",
         background: "transparent",
@@ -405,7 +410,7 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <div className="tariff-actions" style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ display: "flex", background: "#f1f5f9", padding: 4, borderRadius: 12, border: "1px solid #cbd5e1" }} className="dark:bg-white/10 dark:border-white/20">
               <button
                 onClick={() => setStepSize(0.1)}
@@ -454,7 +459,7 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
             gap: 16,
             marginBottom: 20,
           }}
@@ -465,6 +470,7 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
               type="number"
               step="0.01"
               value={baseIncreaseRate}
+              aria-label="Zam Oranı"
               onChange={(e) => setBaseIncreaseRate(e.target.value)}
               onBlur={() => {
                 if (baseIncreaseRate !== "") {
@@ -480,6 +486,7 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
             <div style={labelStyle} className="dark:text-slate-300">Sübvansiyon Dağıtım Yöntemi</div>
             <select
               value={distributionMode}
+              aria-label="Sübvansiyon Dağıtım Yöntemi"
               onChange={(e) => setDistributionMode(e.target.value)}
               style={{...inputStyle, fontSize: 15, fontWeight: 600, color: "#0f172a"}}
             >
@@ -515,7 +522,7 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
             gap: 16,
             marginBottom: 20,
           }}
@@ -538,7 +545,8 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
           </div>
         </div>
 
-        <div
+        <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">Mevcut ücretler: 08.09.2026 tarih ve 1576 sayılı karar. Tüm sütunları görmek için tabloyu sağa kaydırabilirsiniz.</p>
+        <div tabIndex={0} role="region" aria-label="Tarife dengeleme tablosu, yatay kaydırılabilir"
           style={{
             background: "white",
             borderRadius: 18,
@@ -576,6 +584,7 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
                     <input
                       type="checkbox"
                       checked={row.isFixed}
+                      aria-label={`${row.name} sabit`}
                       onChange={(e) => updateTariff(row.id, { isFixed: e.target.checked })}
                       style={{ cursor: "pointer", width: 16, height: 16, accentColor: "#dc2626" }}
                     />
@@ -585,6 +594,7 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
                     <input
                       type="checkbox"
                       checked={row.include}
+                      aria-label={`${row.name} dahil`}
                       disabled={row.isFixed}
                       onChange={(e) => updateTariff(row.id, { include: e.target.checked })}
                       style={{ cursor: row.isFixed ? "not-allowed" : "pointer", width: 16, height: 16 }}
@@ -595,6 +605,7 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
                     <input
                       type="checkbox"
                       checked={row.locked}
+                      aria-label={`${row.name} manuel`}
                       disabled={!row.include || row.isFixed}
                       onChange={(e) => updateTariff(row.id, { locked: e.target.checked })}
                       style={{ cursor: (!row.include || row.isFixed) ? "not-allowed" : "pointer", width: 16, height: 16 }}
@@ -622,6 +633,7 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
                       step={stepSize} 
                       disabled={!row.include || row.isFixed}
                       value={row.manualExtra}
+                      aria-label={`${row.name} manuel ek`}
                       onChange={(e) =>
                         updateTariff(row.id, {
                           manualExtra: Number(e.target.value || 0),
@@ -689,7 +701,7 @@ export default function TarifeDengeleme({ defaultIncreaseRate = 0 }: { defaultIn
           </table>
         </div>
 
-        <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+        <div className="tariff-totals" style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 16 }}>
           <div style={{ padding: "24px", background: "#1e293b", color: "white", borderRadius: 18, boxShadow: "0 10px 25px rgba(15,23,42,0.15)" }} className="dark:bg-[#0f1115]">
             <div style={{ fontSize: 13, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 600 }}>1. Adım: Gerçek Hesaplanan</div>
             <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4 }}>İdeal Aylık Gelir</div>

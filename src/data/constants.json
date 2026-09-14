@@ -42,51 +42,52 @@
     "tufe": 0.33,
     "wage": 0.33
   },
+  "TARIFF_VERSION": "2026-09-08-1576",
   "TICKET_TYPES": [
     {
       "id": "tam",
       "name": "Tam Bilet",
-      "price": 35.00
+      "price": 38.00
     },
     {
       "id": "basin",
       "name": "Basın Kartı Biniş",
-      "price": 23.30
+      "price": 25.00
     },
     {
       "id": "ilkokul_lise",
       "name": "İlkokul-Lise Biniş",
-      "price": 19.80
+      "price": 22.00
     },
     {
       "id": "kredi_karti",
-      "name": "Kredi Kartı Biniş",
-      "price": 42.00
+      "name": "Kart-43 Dışındaki Kartlarla Biniş",
+      "price": 46.00
     },
     {
       "id": "nfc_qr",
       "name": "NFC-QR Biniş",
-      "price": 44.5
+      "price": 49.00
     },
     {
       "id": "uni_ogrenci",
       "name": "Üniversite Öğrenci Biniş",
-      "price": 28.00
+      "price": 31.00
     },
     {
       "id": "uni_ikamet",
       "name": "Üniversite İkamet Kart Biniş",
-      "price": 25.70
+      "price": 28.00
     },
     {
       "id": "uni_hat16",
       "name": "Üniversite Öğr. 16 No.lu Hat",
-      "price": 14.00
+      "price": 15.00
     },
     {
       "id": "aktarma",
       "name": "Aktarma",
-      "price": 11.70
+      "price": 13.00
     }
   ]
 }
