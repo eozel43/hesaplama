@@ -6,7 +6,7 @@ Eşel Mobil; yakıt fiyatı, TÜFE ve asgari ücret değişimlerini belirlenen a
 
 - Yakıt, TÜFE ve asgari ücret değişimlerini dönem bazında hesaplama
 - Yapılandırılabilir ağırlıklarla birleşik değişim oranı üretme
-- Hesaplanan oranın bilet tarifelerine yansımasını gösterme
+- Hesaplanan oranın bilet tarifelerine yansımasını gösterme (Kart-43 dışı kart ücreti EÜTS ek ücret tablosuna göre tam ücretten türetilir)
 - Biniş sayılarına göre tarife dengeleme ve gelir sapması analizi
 - TÜFE, asgari ücret, ağırlık ve tarife verilerini yönetme
 - Açık/koyu tema ve yazdırılabilir sonuç ekranı
@@ -17,7 +17,7 @@ Eşel Mobil; yakıt fiyatı, TÜFE ve asgari ücret değişimlerini belirlenen a
 - React 18 ve TypeScript
 - Vite
 - Tailwind CSS
-- Framer Motion
+- Lucide ikonları
 - Playwright
 - Netlify
 
@@ -54,7 +54,7 @@ npm run test:playwright  # uçtan uca tarayıcı testleri
 
 ## Veri güncelleme
 
-TÜFE, asgari ücret, varsayılan ağırlıklar ve bilet tarifeleri `src/data/constants.json` dosyasında tutulur. Yeni sürümde eklenen TÜFE ve asgari ücret kayıtları, kullanıcıların tarayıcılarında bulunan yerel verilere eksik anahtar olarak otomatik eklenir.
+TÜFE, asgari ücret, varsayılan ağırlıklar, bilet tarifeleri ve hesaplama ekranının üstündeki karar bilgileri (`DECISION_INFO`: son hesaplama tarihi, esas yakıt fiyatı ve dönemi, Encümen kararı, yürürlük tarihi) `src/data/constants.json` dosyasında tutulur. Her tarife döneminde yalnızca bu dosyanın güncellenmesi yeterlidir. Yeni sürümde eklenen TÜFE ve asgari ücret kayıtları, kullanıcıların tarayıcılarında bulunan yerel verilere eksik anahtar olarak otomatik eklenir.
 
 ## Dağıtım
 

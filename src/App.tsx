@@ -1,324 +1,450 @@
-import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import logo from '../image_3ab9b2f9-e025-42e7-aa6b-8255c6443aaf.png';
+import React, { useEffect, useId, useMemo, useState } from 'react';
+import { AlertTriangle, Calculator, Info, LogOut, Moon, Printer, Sun } from 'lucide-react';
+import logo from './assets/logo.webp';
 import constants from './data/constants.json';
 import TarifeDengeleme from './TarifeDengeleme';
+import { FULL_FARE_TICKET_ID, NON_KART43_BANDS, NON_KART43_TICKET_ID, nonKart43Surcharge, roundToLira } from './lib/tariffRules';
 
-const { TUIK_MOCK_DATA: INITIAL_TUIK, ASGARI_UCRET_MOCK_DATA: INITIAL_WAGE, WEIGHTS: INITIAL_WEIGHTS, TICKET_TYPES: INITIAL_TICKETS } = constants as any;
-
-// --- ICON COMPONENTS ---
-const Calculator = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="16" height="20" x="4" y="2" rx="2" /><line x1="8" x2="16" y1="6" y2="6" /><line x1="16" x2="16" y1="14" y2="18" /><path d="M16 10h.01" /><path d="M12 10h.01" /><path d="M8 10h.01" /><path d="M12 14h.01" /><path d="M8 14h.01" /><path d="M12 18h.01" /><path d="M8 18h.01" /></svg>
-);
-const Sun = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg>
-);
-const Moon = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
-);
-const Info = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
-);
-
-// Stable numeric rendering also keeps printed values accurate.
-const CountUp = ({ end, decimals = 2, prefix = "", suffix = "" }: { end: number, decimals?: number, prefix?: string, suffix?: string }) => {
-    return <span>{prefix}{end.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}</span>;
-};
-
-// --- TOOLTIP COMPONENT ---
-const Tooltip = ({ text }: { text: string }) => (
-    <div className="group relative inline-block ml-2 cursor-help">
-        <Info className="text-gray-400 hover:text-indigo-500 transition-colors" />
-        <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-48 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 z-50 text-center shadow-xl">
-            {text}
-            <div className="absolute top-full left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></div>
-        </div>
-    </div>
-);
-
-// --- TYPES & CONSTANTS ---
-interface CalculationData { month1: string; year1: string; value1: string; month2: string; year2: string; value2: string; }
-interface CalculationData { month1: string; year1: string; value1: string; month2: string; year2: string; value2: string; }
+// --- TYPES ---
 type CalculationCategory = 'fuel' | 'tufe' | 'wage';
+interface Ticket { id: string; name: string; price: number; note?: string }
+interface AppData {
+    TARIFF_VERSION: string;
+    TUIK_MOCK_DATA: Record<string, number>;
+    ASGARI_UCRET_MOCK_DATA: Record<string, number>;
+    WEIGHTS: Record<CalculationCategory, number>;
+    TICKET_TYPES: Ticket[];
+}
+interface CalculationData { month1: string; year1: string; value1: string; month2: string; year2: string; value2: string; }
+type PeriodField = keyof CalculationData;
+type CalculationResult = { isValid: true; change: number; weightedChange: number } | { isValid: false; error: string };
+
+// --- CONSTANTS ---
+const INITIAL_DATA = constants as AppData & { DECISION_INFO: typeof constants.DECISION_INFO };
+const { TUIK_MOCK_DATA: INITIAL_TUIK, ASGARI_UCRET_MOCK_DATA: INITIAL_WAGE, WEIGHTS: INITIAL_WEIGHTS, TICKET_TYPES: INITIAL_TICKETS } = INITIAL_DATA;
+const DECISION = constants.DECISION_INFO;
+
 const MONTH_NAMES = ["", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+const CATEGORY_LABELS: Record<CalculationCategory, string> = { fuel: 'Yakıt', tufe: 'TÜFE', wage: 'Asgari ücret' };
+const LATEST_TUFE_KEY = Object.keys(INITIAL_TUIK).sort().pop()!;
 const INITIAL_DATA_STATE: CalculationData = { month1: '', year1: '', value1: '', month2: '', year2: '', value2: '' };
-const INITIAL_FUEL_STATE: CalculationData = { ...INITIAL_DATA_STATE, month1: '9', year1: '2026', value1: '90.67' };
-const INITIAL_TUFE_STATE: CalculationData = { ...INITIAL_DATA_STATE, month1: '8', year1: '2026', value1: String(constants.TUIK_MOCK_DATA['2026-08']) };
+const INITIAL_FUEL_STATE: CalculationData = { ...INITIAL_DATA_STATE, month1: String(DECISION.fuelMonth), year1: String(DECISION.fuelYear), value1: String(DECISION.fuelPrice) };
+const INITIAL_TUFE_STATE: CalculationData = { ...INITIAL_DATA_STATE, month1: String(Number(LATEST_TUFE_KEY.slice(5))), year1: LATEST_TUFE_KEY.slice(0, 4), value1: String(INITIAL_TUIK[LATEST_TUFE_KEY]) };
+const initialInputs = () => ({ fuel: { ...INITIAL_FUEL_STATE }, tufe: { ...INITIAL_TUFE_STATE }, wage: { ...INITIAL_DATA_STATE } });
+
+const formatNumber = (value: number, decimals = 2) => value.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+const formatSigned = (value: number, decimals = 2) => `${value > 0 ? '+' : ''}${formatNumber(value, decimals)}`;
+const formatWeight =(weight: number) => (weight * 100).toLocaleString('tr-TR', { maximumFractionDigits: 2 });
+const today = () => new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 const generateYearOptions = () => {
     const currentYear = new Date().getFullYear();
     return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 };
 
-// --- COMPONENTS ---
-function AdminPanel({ data, onUpdate }: { data: any, onUpdate: (newData: any) => void }) {
+// --- SMALL COMPONENTS ---
+function Tooltip({ text, label }: { text: string; label: string }) {
+    const id = useId();
+    return (
+        <span className="tooltip">
+            <button type="button" aria-label={label} aria-describedby={id}><Info aria-hidden="true" /></button>
+            <span role="tooltip" id={id}>{text}</span>
+        </span>
+    );
+}
+
+function SurchargeTable() {
+    return (
+        <div className="surcharge-table" role="table" aria-label="Kart 43 dışı kartlar ek ücret tablosu">
+            {NON_KART43_BANDS.map(band => (
+                <div key={band.to} role="row">
+                    <span role="cell">{formatNumber(band.from)} – {formatNumber(band.to)} TL</span>
+                    <strong role="cell">+{formatNumber(band.surcharge)}</strong>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// --- ADMIN PANEL ---
+type AdminTab = 'tufe' | 'wage' | 'weights' | 'tickets';
+const ADMIN_TABS: { id: AdminTab; label: string }[] = [
+    { id: 'tufe', label: 'TÜFE' },
+    { id: 'wage', label: 'Asgari ücret' },
+    { id: 'weights', label: 'Ağırlıklar' },
+    { id: 'tickets', label: 'Tarifeler' },
+];
+const SERIES_CONFIG = {
+    tufe: { target: 'TUIK_MOCK_DATA', keyLabel: 'Dönem (YYYY-AA)', keyPlaceholder: 'örn. 2026-09', pattern: /^\d{4}-(0[1-9]|1[0-2])$/, valueLabel: 'Endeks değeri' },
+    wage: { target: 'ASGARI_UCRET_MOCK_DATA', keyLabel: 'Yıl', keyPlaceholder: 'örn. 2027', pattern: /^\d{4}$/, valueLabel: 'Net asgari ücret (TL)' },
+} as const;
+
+function AdminPanel({ data, onUpdate }: { data: AppData, onUpdate: (newData: AppData) => void }) {
     const [newData, setNewData] = useState(data);
-    const [activeTab, setActiveTab] = useState<'tufe' | 'wage' | 'weights' | 'tickets'>('tufe');
+    const [activeTab, setActiveTab] = useState<AdminTab>('tufe');
     const [keys, setKeys] = useState({ tufe: '', wage: '' });
     const [vals, setVals] = useState({ tufe: '', wage: '' });
+    const [seriesError, setSeriesError] = useState('');
     const [ticketForm, setTicketForm] = useState({ id: '', name: '', price: '', note: '' });
+    const [ticketError, setTicketError] = useState('');
+    const [weightDrafts, setWeightDrafts] = useState<Record<CalculationCategory, string>>(() => ({
+        fuel: formatWeight(data.WEIGHTS.fuel), tufe: formatWeight(data.WEIGHTS.tufe), wage: formatWeight(data.WEIGHTS.wage),
+    }));
+    const [undo, setUndo] = useState<{ message: string; snapshot: AppData } | null>(null);
+    const baseId = useId();
 
-    const handleUpdate = (type: 'tufe' | 'wage', k: string, v: string) => {
-        if (!k || !v) return;
-        const target = type === 'tufe' ? 'TUIK_MOCK_DATA' : 'ASGARI_UCRET_MOCK_DATA';
-        const updated = { ...newData, [target]: { ...newData[target], [k]: parseFloat(v) } };
-        setNewData(updated);
-        onUpdate(updated);
+    useEffect(() => {
+        if (!undo) return;
+        const timer = setTimeout(() => setUndo(null), 10000);
+        return () => clearTimeout(timer);
+    }, [undo]);
+
+    const commit = (updated: AppData) => { setNewData(updated); onUpdate(updated); setUndo(null); };
+    const commitDeletion = (updated: AppData, message: string) => {
+        const snapshot = newData;
+        commit(updated);
+        setUndo({ message, snapshot });
+    };
+
+    const handleUpdate = (type: 'tufe' | 'wage') => {
+        const config = SERIES_CONFIG[type];
+        const key = keys[type].trim();
+        const value = parseFloat(vals[type].replace(',', '.'));
+        if (!config.pattern.test(key)) return setSeriesError(`${config.keyLabel} biçimi hatalı. Örnek: ${config.keyPlaceholder.replace('örn. ', '')}`);
+        if (!Number.isFinite(value) || value <= 0) return setSeriesError('Değer sıfırdan büyük bir sayı olmalıdır.');
+        commit({ ...newData, [config.target]: { ...newData[config.target], [key]: value } });
         setKeys({ ...keys, [type]: '' });
         setVals({ ...vals, [type]: '' });
+        setSeriesError('');
     };
 
     const handleDelete = (type: 'tufe' | 'wage', key: string) => {
-        const target = type === 'tufe' ? 'TUIK_MOCK_DATA' : 'ASGARI_UCRET_MOCK_DATA';
-        const { [key]: _, ...rest } = newData[target];
-        const updated = { ...newData, [target]: rest };
-        setNewData(updated);
-        onUpdate(updated);
+        const target = SERIES_CONFIG[type].target;
+        const rest = { ...newData[target] };
+        delete rest[key];
+        commitDeletion({ ...newData, [target]: rest }, `${key} kaydı silindi.`);
     };
+
+    const handleWeightChange = (category: CalculationCategory, raw: string) => {
+        setWeightDrafts({ ...weightDrafts, [category]: raw });
+        const percent = parseFloat(raw.replace(',', '.'));
+        if (Number.isFinite(percent) && percent >= 0 && percent <= 100) {
+            commit({ ...newData, WEIGHTS: { ...newData.WEIGHTS, [category]: percent / 100 } });
+        }
+    };
+    const weightTotal = (newData.WEIGHTS.fuel + newData.WEIGHTS.tufe + newData.WEIGHTS.wage) * 100;
 
     const handleTicketUpdate = () => {
-        if (!ticketForm.name || !ticketForm.price) return;
-        const id = ticketForm.id || Math.random().toString(36).substr(2, 9);
-        const existingIndex = newData.TICKET_TYPES.findIndex((t: any) => t.id === id);
-        let updatedTickets = [...newData.TICKET_TYPES];
-        const newTicket = { ...ticketForm, id, price: parseFloat(ticketForm.price) };
-        if (existingIndex > -1) updatedTickets[existingIndex] = newTicket;
-        else updatedTickets.push(newTicket);
-        const updated = { ...newData, TICKET_TYPES: updatedTickets };
-        setNewData(updated);
-        onUpdate(updated);
+        const price = parseFloat(ticketForm.price.replace(',', '.'));
+        if (!ticketForm.name.trim()) return setTicketError('Bilet adı boş bırakılamaz.');
+        if (!Number.isFinite(price) || price <= 0) return setTicketError('Fiyat sıfırdan büyük bir sayı olmalıdır.');
+        const id = ticketForm.id || Math.random().toString(36).slice(2, 11);
+        const newTicket = { id, name: ticketForm.name.trim(), price, note: ticketForm.note };
+        const exists = newData.TICKET_TYPES.some(t => t.id === id);
+        const updatedTickets = exists ? newData.TICKET_TYPES.map(t => t.id === id ? newTicket : t) : [...newData.TICKET_TYPES, newTicket];
+        commit({ ...newData, TICKET_TYPES: updatedTickets });
         setTicketForm({ id: '', name: '', price: '', note: '' });
+        setTicketError('');
     };
 
-    const handleTicketDelete = (id: string) => {
-        const updated = { ...newData, TICKET_TYPES: newData.TICKET_TYPES.filter((t: any) => t.id !== id) };
-        setNewData(updated);
-        onUpdate(updated);
-    };
+    const handleTicketDelete = (ticket: Ticket) => commitDeletion(
+        { ...newData, TICKET_TYPES: newData.TICKET_TYPES.filter(t => t.id !== ticket.id) },
+        `${ticket.name} tarifesi silindi.`,
+    );
+
+    const series = activeTab === 'tufe' || activeTab === 'wage' ? SERIES_CONFIG[activeTab] : null;
 
     return (
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-panel rounded-2xl p-6 sm:p-8">
-            <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-white">Yönetim Paneli</h2>
-            <div className="flex flex-wrap space-x-2 sm:space-x-4 mb-6 border-b border-black/5 dark:border-white/10">
-                {[
-                    { id: 'tufe', label: 'TÜFE' },
-                    { id: 'wage', label: 'Asgari Ücret' },
-                    { id: 'weights', label: 'Ağırlıklar' },
-                    { id: 'tickets', label: 'Tarifeler' }
-                ].map(tab => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`pb-3 px-2 sm:px-4 capitalize text-xs sm:text-sm transition-all duration-300 ${activeTab === tab.id ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}>
+        <section className="panel admin" aria-labelledby={`${baseId}-title`}>
+            <h2 id={`${baseId}-title`}>Yönetim paneli</h2>
+            <div className="tabs" role="tablist" aria-label="Veri grupları">
+                {ADMIN_TABS.map(tab => (
+                    <button key={tab.id} type="button" role="tab" id={`${baseId}-tab-${tab.id}`} aria-selected={activeTab === tab.id} aria-controls={`${baseId}-panel`} tabIndex={activeTab === tab.id ? 0 : -1}
+                        onClick={() => { setActiveTab(tab.id); setSeriesError(''); setTicketError(''); }}
+                        onKeyDown={e => {
+                            if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+                            const index = ADMIN_TABS.findIndex(t => t.id === activeTab);
+                            const next = ADMIN_TABS[(index + (e.key === 'ArrowRight' ? 1 : ADMIN_TABS.length - 1)) % ADMIN_TABS.length];
+                            setActiveTab(next.id);
+                            document.getElementById(`${baseId}-tab-${next.id}`)?.focus();
+                        }}>
                         {tab.label}
                     </button>
                 ))}
             </div>
-            {activeTab === 'tufe' || activeTab === 'wage' ? (
-                <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-black/5 dark:bg-white/5 p-4 rounded-xl">
-                        <input type="text" placeholder="Key (Örn: 2026-02)" value={keys[activeTab]} onChange={e => setKeys({ ...keys, [activeTab]: e.target.value })} className="bg-transparent border-b border-black/20 dark:border-white/20 dark:text-white p-2 outline-none focus:border-indigo-500 transition-colors" />
-                        <input type="number" step="0.01" placeholder="Değer" value={vals[activeTab]} onChange={e => setVals({ ...vals, [activeTab]: e.target.value })} className="bg-transparent border-b border-black/20 dark:border-white/20 dark:text-white p-2 outline-none focus:border-indigo-500 transition-colors" />
-                        <button onClick={() => handleUpdate(activeTab as any, keys[activeTab], vals[activeTab])} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg p-2 font-semibold transition-colors shadow-lg shadow-indigo-500/20">Güncelle / Ekle</button>
-                    </div>
-                    <div className="max-h-60 overflow-y-auto rounded-xl p-2 custom-scrollbar">
-                        {Object.entries(newData[activeTab === 'tufe' ? 'TUIK_MOCK_DATA' : 'ASGARI_UCRET_MOCK_DATA']).sort().reverse().map(([k, v]: any) => (
-                            <div key={k} className="flex justify-between items-center border-b border-black/5 dark:border-white/5 py-3 px-3 hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-lg">
-                                <span className="font-medium text-slate-700 dark:text-slate-300">{k}</span>
-                                <div className="flex items-center gap-4">
-                                    <span className="font-bold text-indigo-600 dark:text-indigo-400">{v.toLocaleString('tr-TR')}</span>
-                                    <button onClick={() => { setKeys({ ...keys, [activeTab]: k }); setVals({ ...vals, [activeTab]: v.toString() }); }} className="text-blue-500/80 hover:text-blue-500 text-sm font-medium transition-colors">Düzenle</button>
-                                    <button onClick={() => handleDelete(activeTab as any, k)} className="text-red-500/80 hover:text-red-500 text-sm font-medium transition-colors">Sil</button>
-                                </div>
+
+            <div className="undo-region" role="status" aria-live="polite">
+                {undo && (
+                    <p className="undo-bar">
+                        <span>{undo.message}</span>
+                        <button type="button" className="btn btn--link" onClick={() => commit(undo.snapshot)}>Geri al</button>
+                    </p>
+                )}
+            </div>
+
+            <div role="tabpanel" id={`${baseId}-panel`} aria-labelledby={`${baseId}-tab-${activeTab}`}>
+                {series && (activeTab === 'tufe' || activeTab === 'wage') ? (
+                    <>
+                        <form className="admin-form" onSubmit={e => { e.preventDefault(); handleUpdate(activeTab); }}>
+                            <div className="field">
+                                <label htmlFor={`${baseId}-key`}>{series.keyLabel}</label>
+                                <input id={`${baseId}-key`} className="control" type="text" inputMode="numeric" placeholder={series.keyPlaceholder} value={keys[activeTab]} onChange={e => setKeys({ ...keys, [activeTab]: e.target.value })} />
                             </div>
-                        ))}
-                    </div>
-                </div>
-            ) : activeTab === 'weights' ? (
-                <div className="space-y-6 p-4 text-slate-700 dark:text-slate-300">
-                    {['fuel', 'tufe', 'wage'].map(w => (
-                        <div key={w} className="flex items-center justify-between group">
-                            <label className="capitalize font-medium">{w === 'fuel' ? 'Yakıt' : w === 'tufe' ? 'TÜFE' : 'Asgari Ücret'} (%):</label>
-                            <input type="number" step="0.01" value={newData.WEIGHTS[w]} onChange={e => {
-                                const updated = { ...newData, WEIGHTS: { ...newData.WEIGHTS, [w]: parseFloat(e.target.value) } };
-                                setNewData(updated); onUpdate(updated);
-                            }} className="bg-transparent border-b-2 border-black/10 dark:border-white/10 group-hover:border-indigo-500 focus:border-indigo-500 p-2 text-right w-24 outline-none transition-colors" />
+                            <div className="field">
+                                <label htmlFor={`${baseId}-value`}>{series.valueLabel}</label>
+                                <input id={`${baseId}-value`} className="control" type="number" step="0.01" value={vals[activeTab]} onChange={e => setVals({ ...vals, [activeTab]: e.target.value })} />
+                            </div>
+                            <button type="submit" className="btn btn--primary">Kaydet</button>
+                            {seriesError && <p className="alert alert--danger" role="alert" style={{ gridColumn: '1 / -1' }}><AlertTriangle aria-hidden="true" />{seriesError}</p>}
+                        </form>
+                        <div className="admin-list">
+                            {Object.entries(newData[series.target]).sort().reverse().map(([k, v]) => (
+                                <div key={k}>
+                                    <span className="item-key">{k}</span>
+                                    <span className="item-actions">
+                                        <span className="item-value">{v.toLocaleString('tr-TR')}</span>
+                                        <button type="button" className="btn btn--link" aria-label={`${k} kaydını düzenle`} onClick={() => { setKeys({ ...keys, [activeTab]: k }); setVals({ ...vals, [activeTab]: v.toString() }); }}>Düzenle</button>
+                                        <button type="button" className="btn btn--link is-danger" aria-label={`${k} kaydını sil`} onClick={() => handleDelete(activeTab, k)}>Sil</button>
+                                    </span>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-black/5 dark:bg-white/5 p-4 rounded-xl">
-                        <input type="text" placeholder="Bilet Adı" value={ticketForm.name} onChange={e => setTicketForm({ ...ticketForm, name: e.target.value })} className="bg-transparent border-b border-black/20 dark:border-white/20 dark:text-white p-2 outline-none focus:border-indigo-500 transition-colors" />
-                        <input type="number" step="0.01" placeholder="Fiyat" value={ticketForm.price} onChange={e => setTicketForm({ ...ticketForm, price: e.target.value })} className="bg-transparent border-b border-black/20 dark:border-white/20 dark:text-white p-2 outline-none focus:border-indigo-500 transition-colors" />
-                        <input type="text" placeholder="Not (Opsiyonel)" value={ticketForm.note} onChange={e => setTicketForm({ ...ticketForm, note: e.target.value })} className="bg-transparent border-b border-black/20 dark:border-white/20 dark:text-white p-2 outline-none focus:border-indigo-500 transition-colors" />
-                        <button onClick={handleTicketUpdate} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg p-2 font-semibold transition-colors shadow-lg shadow-indigo-500/20">
-                            {ticketForm.id ? 'Güncelle' : 'Ekle'}
-                        </button>
-                    </div>
-                    <div className="max-h-60 overflow-y-auto rounded-xl p-2 custom-scrollbar">
-                        {newData.TICKET_TYPES.map((t: any) => (
-                            <div key={t.id} className="flex flex-wrap justify-between items-center border-b border-black/5 dark:border-white/5 py-3 px-3 hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-lg">
-                                <div className="flex flex-col">
-                                    <span className="font-bold text-slate-800 dark:text-slate-200">{t.name}</span>
-                                    {t.note && <span className="text-xs text-slate-500">{t.note}</span>}
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <span className="font-bold text-indigo-600 dark:text-indigo-400 text-lg">₺{t.price}</span>
-                                    <button onClick={() => setTicketForm({ id: t.id, name: t.name, price: t.price.toString(), note: t.note || '' })} className="text-blue-500/80 hover:text-blue-500 text-sm font-medium transition-colors">Düzenle</button>
-                                    <button onClick={() => handleTicketDelete(t.id)} className="text-red-500/80 hover:text-red-500 text-sm font-medium transition-colors">Sil</button>
-                                </div>
+                    </>
+                ) : activeTab === 'weights' ? (
+                    <div className="weights-form">
+                        {(Object.keys(CATEGORY_LABELS) as CalculationCategory[]).map(w => (
+                            <div key={w} className="weight-row">
+                                <label htmlFor={`${baseId}-w-${w}`} className="field-label">{CATEGORY_LABELS[w]} ağırlığı (%)</label>
+                                <input id={`${baseId}-w-${w}`} className="control" type="text" inputMode="decimal" value={weightDrafts[w]} onChange={e => handleWeightChange(w, e.target.value)} />
                             </div>
                         ))}
+                        <p className="field-hint">Toplam: <strong>%{weightTotal.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}</strong></p>
+                        {Math.abs(weightTotal - 100) > 0.01 && (
+                            <p className="alert alert--warning" role="status"><AlertTriangle aria-hidden="true" />Ağırlıkların toplamı %100 olmalıdır. Hesaplama, toplam %100 olana kadar tutarsız sonuç verir.</p>
+                        )}
                     </div>
-                </div>
-            )}
-        </motion.div>
+                ) : (
+                    <>
+                        <form className="admin-form" onSubmit={e => { e.preventDefault(); handleTicketUpdate(); }}>
+                            <div className="field">
+                                <label htmlFor={`${baseId}-tname`}>Bilet adı</label>
+                                <input id={`${baseId}-tname`} className="control" type="text" value={ticketForm.name} onChange={e => setTicketForm({ ...ticketForm, name: e.target.value })} />
+                            </div>
+                            <div className="field">
+                                <label htmlFor={`${baseId}-tprice`}>Fiyat (TL)</label>
+                                <input id={`${baseId}-tprice`} className="control" type="number" step="0.01" value={ticketForm.price} onChange={e => setTicketForm({ ...ticketForm, price: e.target.value })} />
+                            </div>
+                            <div className="field">
+                                <label htmlFor={`${baseId}-tnote`}>Not (isteğe bağlı)</label>
+                                <input id={`${baseId}-tnote`} className="control" type="text" value={ticketForm.note} onChange={e => setTicketForm({ ...ticketForm, note: e.target.value })} />
+                            </div>
+                            <div className="flex gap-2">
+                                <button type="submit" className="btn btn--primary flex-1">{ticketForm.id ? 'Güncelle' : 'Ekle'}</button>
+                                {ticketForm.id && <button type="button" className="btn btn--secondary" onClick={() => { setTicketForm({ id: '', name: '', price: '', note: '' }); setTicketError(''); }}>Vazgeç</button>}
+                            </div>
+                            {ticketError && <p className="alert alert--danger" role="alert" style={{ gridColumn: '1 / -1' }}><AlertTriangle aria-hidden="true" />{ticketError}</p>}
+                        </form>
+                        <div className="admin-list">
+                            {newData.TICKET_TYPES.map(t => (
+                                <div key={t.id}>
+                                    <span><span className="item-key">{t.name}</span>{t.note && <span className="item-note">{t.note}</span>}</span>
+                                    <span className="item-actions">
+                                        <span className="item-value">{formatNumber(t.price)} TL</span>
+                                        <button type="button" className="btn btn--link" aria-label={`${t.name} tarifesini düzenle`} onClick={() => setTicketForm({ id: t.id, name: t.name, price: t.price.toString(), note: t.note || '' })}>Düzenle</button>
+                                        <button type="button" className="btn btn--link is-danger" aria-label={`${t.name} tarifesini sil`} onClick={() => handleTicketDelete(t)}>Sil</button>
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
+        </section>
     );
 }
 
-function InputSection({ title, data, onDataChange, color, infoLink, years, currency = false }: any) {
-    const colorPairs: any = {
-        orange: { border: 'border-[var(--accent-orange)]', text: 'text-[var(--accent-orange)]', bg: 'bg-[var(--accent-orange)]' },
-        blue: { border: 'border-[var(--accent-blue)]', text: 'text-[var(--accent-blue)]', bg: 'bg-[var(--accent-blue)]' },
-        green: { border: 'border-[var(--accent-green)]', text: 'text-[var(--accent-green)]', bg: 'bg-[var(--accent-green)]' }
-    };
-    const c = colorPairs[color] || colorPairs.blue;
+// --- CALCULATION INPUTS ---
+interface InputSectionProps {
+    title: string;
+    tone: CalculationCategory;
+    data: CalculationData;
+    onDataChange: (field: PeriodField, value: string) => void;
+    years: number[];
+    currency?: boolean;
+    infoLink?: { url: string; text: string; label: string };
+    hint?: string;
+}
 
-    const renderPeriod = (p: '1' | '2') => (
-        <div className="space-y-3">
-            <h3 className="text-xs tracking-widest font-semibold text-slate-500 dark:text-slate-400">{p === '1' ? 'BAŞLANGIÇ DÖNEMİ' : 'BİTİŞ DÖNEMİ'}</h3>
-            <div className="grid grid-cols-2 gap-3">
-                <select value={data[`month${p}`]} onChange={e => onDataChange(`month${p}`, e.target.value)} className="w-full bg-black/5 dark:bg-white/5 px-4 py-3 border-none text-slate-800 dark:text-white rounded-xl focus:ring-1 focus:ring-indigo-500 outline-none transition-all cursor-pointer font-medium appearance-none">
-                    <option value="" className="text-slate-800">Ay Seçimi</option>
-                    {MONTH_NAMES.slice(1).map((m, i) => <option key={i} value={i + 1} className="text-slate-800">{m}</option>)}
-                </select>
-                <select value={data[`year${p}`]} onChange={e => onDataChange(`year${p}`, e.target.value)} className="w-full bg-black/5 dark:bg-white/5 px-4 py-3 border-none text-slate-800 dark:text-white rounded-xl focus:ring-1 focus:ring-indigo-500 outline-none transition-all cursor-pointer font-medium appearance-none">
-                    <option value="" className="text-slate-800">Yıl Seçimi</option>
-                    {years.map((y: any) => <option key={y} value={y} className="text-slate-800">{y}</option>)}
-                </select>
-            </div>
-            <div className="relative">
-                <input type="number" step="0.01" value={data[`value${p}`]} onChange={e => onDataChange(`value${p}`, e.target.value)} placeholder={`Belirlenen Değer`} className={`w-full bg-black/5 dark:bg-white/5 px-4 py-3 border-none text-slate-800 dark:text-white rounded-xl focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium ${currency ? 'pr-12' : ''}`} />
-                {currency && <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-bold">₺</span>}
-            </div>
-        </div>
-    );
+/** Converts Turkish-formatted input ("22.104,50", "94,5", "94.50") into a canonical decimal string ("22104.5"). */
+function parseDecimalInput(raw: string): string {
+    const cleaned = raw.replace(/[\s₺]/g, '');
+    if (!cleaned) return '';
+    const normalized = cleaned.includes(',')
+        ? cleaned.replace(/\./g, '').replace(',', '.')
+        : /^\d{1,3}(\.\d{3})+$/.test(cleaned) ? cleaned.replace(/\./g, '') : cleaned;
+    const value = Number(normalized);
+    return Number.isFinite(value) ? String(value) : '';
+}
+
+function DecimalInput({ id, value, onChange }: { id: string; value: string; onChange: (value: string) => void }) {
+    // While editing, the raw text is kept; otherwise the value is shown in tr-TR format.
+    const [draft, setDraft] = useState<string | null>(null);
+    const display = draft ?? (value === '' ? '' : formatNumber(Number(value)));
     return (
-        <div className={`input-panel glass-panel ${c.border}`}>
-            <div className={`absolute top-0 right-0 w-32 h-32 ${c.bg} opacity-5 blur-[60px] rounded-full point-events-none transition-opacity group-hover:opacity-10 print:hidden`} />
-            <div className="mb-6 flex items-center justify-between relative z-10">
-                <h2 className={`text-xl font-bold dark:text-white flex items-center tracking-tight`}>
-                    {title}
-                </h2>
-                {infoLink && <a href={infoLink.url} target="_blank" className="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors uppercase tracking-wider">{infoLink.text}</a>}
-            </div>
+        <input
+            id={id}
+            className="control"
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            value={display}
+            onFocus={() => setDraft(value === '' ? '' : Number(value).toLocaleString('tr-TR', { useGrouping: false, maximumFractionDigits: 6 }))}
+            onChange={e => { setDraft(e.target.value); onChange(parseDecimalInput(e.target.value)); }}
+            onBlur={() => setDraft(null)}
+        />
+    );
+}
+
+function InputSection({ title, tone, data, onDataChange, years, currency = false, infoLink, hint }: InputSectionProps) {
+    const baseId = useId();
+    const renderPeriod = (p: '1' | '2') => {
+        const id = `${baseId}-${p}`;
+        return (
+            <fieldset className="period">
+                <legend>{p === '1' ? 'Başlangıç dönemi' : 'Bitiş dönemi'}</legend>
+                <div className="field">
+                    <label htmlFor={`${id}-m`}>Ay</label>
+                    <select id={`${id}-m`} className="control" value={data[`month${p}`]} onChange={e => onDataChange(`month${p}`, e.target.value)}>
+                        <option value="">Seçiniz</option>
+                        {MONTH_NAMES.slice(1).map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                    </select>
+                </div>
+                <div className="field">
+                    <label htmlFor={`${id}-y`}>Yıl</label>
+                    <select id={`${id}-y`} className="control" value={data[`year${p}`]} onChange={e => onDataChange(`year${p}`, e.target.value)}>
+                        <option value="">Seçiniz</option>
+                        {years.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                </div>
+                <div className="field">
+                    <label htmlFor={`${id}-v`}>{currency ? 'Değer (TL)' : 'Endeks değeri'}</label>
+                    <div className="control-affix">
+                        <DecimalInput id={`${id}-v`} value={data[`value${p}`]} onChange={v => onDataChange(`value${p}`, v)} />
+                        {currency && <span className="affix" aria-hidden="true">₺</span>}
+                    </div>
+                </div>
+            </fieldset>
+        );
+    };
+    return (
+        <fieldset className="panel input-panel" data-tone={tone}>
+            <legend>
+                <span>{title}</span>
+                {infoLink && <a href={infoLink.url} target="_blank" rel="noopener noreferrer" aria-label={infoLink.label} className="print:hidden">{infoLink.text}</a>}
+            </legend>
+            {hint && <p className="field-hint panel-hint">{hint}</p>}
             <div className="period-grid">{renderPeriod('1')}{renderPeriod('2')}</div>
+        </fieldset>
+    );
+}
+
+function ResultCard({ title, tone, data, result, weight }: { title: string; tone: CalculationCategory; data: CalculationData; result?: CalculationResult; weight: number }) {
+    if (!result) return null;
+    if (!result.isValid) {
+        return (
+            <div className="panel result-card is-invalid" role="status">
+                <h3>{title}</h3>
+                <p className="flex items-start gap-2"><AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 flex-none" />{result.error}</p>
+            </div>
+        );
+    }
+    const period = (m: string, y: string) => m && y ? `${MONTH_NAMES[Number(m)]} ${y}` : '—';
+    const label = CATEGORY_LABELS[tone];
+    return (
+        <div className="panel result-card" data-tone={tone}>
+            <div>
+                <h3>{title}</h3>
+                <p className="result-period">{period(data.month1, data.year1)} – {period(data.month2, data.year2)}</p>
+            </div>
+            <div>
+                <p className="result-label">
+                    Ağırlıklı katkı (ağırlık %{formatWeight(weight)})
+                    <Tooltip label={`${label} ağırlıklı katkısı hakkında bilgi`} text={`${label} değişiminin %${formatWeight(weight)} ağırlıkla toplam değişime katkısıdır: ${formatSigned(result.change)}% × %${formatWeight(weight)}.`} />
+                </p>
+                <p className="result-value">{formatSigned(result.weightedChange)}%</p>
+            </div>
+            <p className="result-raw"><span>{label} değişimi</span><strong>{formatSigned(result.change)}%</strong></p>
         </div>
     );
 }
 
-function ResultCard({ title, data, result, valueType, weightedLabel, color, tooltip }: any) {
-    if (!result.isValid) return <div className="glass-panel p-6 rounded-2xl border-l-4 border-red-500 text-red-500 text-center font-medium opacity-50">{title}: {result.error}</div>;
-
-    const colorPairs: any = {
-        orange: { text: 'text-[var(--accent-orange)]' },
-        blue: { text: 'text-[var(--accent-blue)]' },
-        green: { text: 'text-[var(--accent-green)]' }
-    };
-    const c = colorPairs[color] || colorPairs.blue;
-
-    return (
-        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="glass-panel rounded-2xl p-6 text-center flex flex-col items-center relative overflow-hidden print:opacity-100 print:transform-none print:!translate-y-0 print:!opacity-100">
-            <div className="flex flex-col items-center mb-6">
-                <h3 className="text-xl font-bold dark:text-white tracking-tight">{title}</h3>
-                <div className="text-[10px] text-slate-500 tracking-widest mt-1 font-semibold">
-                    {(MONTH_NAMES[data.month1] || '').toLocaleUpperCase('tr-TR')} {data.year1} — {(MONTH_NAMES[data.month2] || '').toLocaleUpperCase('tr-TR')} {data.year2}
-                </div>
-            </div>
-
-            <div className="space-y-6 w-full flex-grow flex flex-col justify-center">
-                <div className="flex flex-col items-center">
-                    <span className="text-xs text-slate-500 mb-2 flex items-center justify-center font-medium tracking-wider">
-                        {(weightedLabel || '').toLocaleUpperCase('tr-TR')} <Tooltip text={tooltip} />
-                    </span>
-                    <div className={`text-4xl sm:text-5xl font-black ${c.text} tracking-tighter flex items-center`}>
-                        {result.weightedChange > 0 ? '+' : ''}<CountUp end={result.weightedChange} />%
-                    </div>
-                </div>
-
-                <div className="pt-4 border-t border-black/5 dark:border-white/5 relative">
-                    <div className="text-[10px] text-slate-400 tracking-widest mb-1 font-semibold">{(valueType || '').toLocaleUpperCase('tr-TR')} SAF DEĞİŞİMİ</div>
-                    <div className="text-xl sm:text-2xl font-bold dark:text-white opacity-80 font-mono">
-                        {result.change > 0 ? '+' : ''}<CountUp end={result.change} />%
-                    </div>
-                </div>
-            </div>
-        </motion.div>
-    );
-}
-
-function LoginComponent({ onLogin, error }: any) {
-    const [u, setU] = useState(''); const [p, setP] = useState('');
+// --- LOGIN ---
+function LoginComponent({ onLogin }: { onLogin: (u: string, p: string) => boolean }) {
+    const [u, setU] = useState('');
+    const [p, setP] = useState('');
+    const [error, setError] = useState('');
+    const id = useId();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onLogin(u, p);
+        if (!onLogin(u, p)) setError('Kullanıcı adı veya parola hatalı. Bilgilerinizi kontrol edip yeniden deneyin.');
     };
 
     return (
-        <div className="min-h-screen relative flex items-center justify-center p-4 bg-slate-50 dark:bg-[#0f1115]">
-            <div className="bg-noise" />
-
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} className="w-full max-w-sm relative z-10">
-                <div className="glass-panel p-10 rounded-3xl text-center">
-                    <motion.img initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }} src={logo} className="w-24 mx-auto mb-8 drop-shadow-2xl" />
-
-                    <div className="mb-10 space-y-2">
-                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Değerleme Platformu</p>
-                        <h2 className="text-2xl sm:text-3xl font-black dark:text-white tracking-tight">Eşel Mobil<span className="text-indigo-500">.</span></h2>
+        <main className="login">
+            <div className="panel login-card">
+                <header>
+                    <img src={logo} alt="Kütahya Belediyesi logosu" width={84} height={84} />
+                    <h1>Eşel Mobil</h1>
+                    <p>Tarife Hesaplama Sistemi</p>
+                    <p>Kütahya Belediyesi · Ulaşım Hizmetleri Müdürlüğü</p>
+                </header>
+                <form onSubmit={handleSubmit} noValidate>
+                    <div className="field">
+                        <label htmlFor={`${id}-u`}>Kullanıcı adı</label>
+                        <input id={`${id}-u`} className="control" type="text" autoComplete="username" value={u} onChange={e => setU(e.target.value)} aria-invalid={!!error} />
                     </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <input type="text" placeholder="Kullanıcı Kodu" value={u} onChange={e => setU(e.target.value)} className="w-full p-4 bg-black/5 dark:bg-white/5 border-none dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium placeholder-slate-400 text-center" />
-                        <input type="password" placeholder="Parola" value={p} onChange={e => setP(e.target.value)} className="w-full p-4 bg-black/5 dark:bg-white/5 border-none dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium placeholder-slate-400 text-center" />
-
-                        <AnimatePresence>
-                            {error && <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="text-red-500 font-medium text-sm pt-2">{error}</motion.p>}
-                        </AnimatePresence>
-
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="w-full mt-4 bg-indigo-600 text-white p-4 rounded-xl font-bold tracking-wide shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all">Sisteme Giriş</motion.button>
-                    </form>
-                </div>
-                <p className="text-[10px] text-center text-slate-400 mt-8 font-medium uppercase tracking-widest opacity-60">© 2026 Kütahya Belediyesi</p>
-            </motion.div>
-        </div>
+                    <div className="field">
+                        <label htmlFor={`${id}-p`}>Parola</label>
+                        <input id={`${id}-p`} className="control" type="password" autoComplete="current-password" value={p} onChange={e => setP(e.target.value)} aria-invalid={!!error} />
+                    </div>
+                    {error && <p className="alert alert--danger" role="alert"><AlertTriangle aria-hidden="true" />{error}</p>}
+                    <button type="submit" className="btn btn--primary">Sisteme giriş</button>
+                </form>
+            </div>
+            <p className="login-footer">© {new Date().getFullYear()} Kütahya Belediyesi</p>
+        </main>
     );
 }
 
+// --- APP ---
 function App() {
-    const [appData, setAppData] = useState(INITIAL_TUIK ? { TARIFF_VERSION: constants.TARIFF_VERSION, TUIK_MOCK_DATA: INITIAL_TUIK, ASGARI_UCRET_MOCK_DATA: INITIAL_WAGE, WEIGHTS: INITIAL_WEIGHTS, TICKET_TYPES: INITIAL_TICKETS } : null);
+    const [appData, setAppData] = useState<AppData>({ TARIFF_VERSION: constants.TARIFF_VERSION, TUIK_MOCK_DATA: INITIAL_TUIK, ASGARI_UCRET_MOCK_DATA: INITIAL_WAGE, WEIGHTS: INITIAL_WEIGHTS, TICKET_TYPES: INITIAL_TICKETS });
     const [view, setView] = useState<'calc' | 'admin' | 'dengeleme'>('calc');
-    const [isDark, setIsDark] = useState(false);
+    const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
     const [auth, setAuth] = useState({ isAuth: false, isAdmin: false });
-    const [inputs, setInputs] = useState<any>({ fuel: { ...INITIAL_FUEL_STATE }, tufe: { ...INITIAL_TUFE_STATE }, wage: { ...INITIAL_DATA_STATE } });
-    const [results, setResults] = useState<any>({});
+    const [inputs, setInputs] = useState<Record<CalculationCategory, CalculationData>>(initialInputs);
+    const [results, setResults] = useState<Partial<Record<CalculationCategory, CalculationResult>>>({});
+    const [calcError, setCalcError] = useState('');
 
-    React.useEffect(() => {
+    useEffect(() => {
         const stored = localStorage.getItem('appConstants');
         if (stored) {
             const parsed = JSON.parse(stored);
             let changed = false;
             if (parsed.TARIFF_VERSION !== constants.TARIFF_VERSION) {
-                const savedTickets = Array.isArray(parsed.TICKET_TYPES) ? parsed.TICKET_TYPES : [];
+                const savedTickets: Ticket[] = Array.isArray(parsed.TICKET_TYPES) ? parsed.TICKET_TYPES : [];
                 parsed.TICKET_TYPES = [
-                    ...INITIAL_TICKETS.map((ticket: { id: string }) => ({
-                        ...savedTickets.find((saved: { id: string }) => saved.id === ticket.id),
+                    ...INITIAL_TICKETS.map(ticket => ({
+                        ...savedTickets.find(saved => saved.id === ticket.id),
                         ...ticket,
                     })),
-                    ...savedTickets.filter((saved: { id: string }) => !INITIAL_TICKETS.some((ticket: { id: string }) => ticket.id === saved.id)),
+                    ...savedTickets.filter(saved => !INITIAL_TICKETS.some(ticket => ticket.id === saved.id)),
                 ];
                 parsed.TARIFF_VERSION = constants.TARIFF_VERSION;
                 changed = true;
             }
-            if (INITIAL_TUIK && parsed.TUIK_MOCK_DATA) {
+            if (parsed.TUIK_MOCK_DATA) {
                 for (const key of Object.keys(INITIAL_TUIK)) {
                     if (parsed.TUIK_MOCK_DATA[key] === undefined) {
                         parsed.TUIK_MOCK_DATA[key] = INITIAL_TUIK[key];
@@ -326,7 +452,7 @@ function App() {
                     }
                 }
             }
-            if (INITIAL_WAGE && parsed.ASGARI_UCRET_MOCK_DATA) {
+            if (parsed.ASGARI_UCRET_MOCK_DATA) {
                 for (const key of Object.keys(INITIAL_WAGE)) {
                     if (parsed.ASGARI_UCRET_MOCK_DATA[key] === undefined) {
                         parsed.ASGARI_UCRET_MOCK_DATA[key] = INITIAL_WAGE[key];
@@ -339,205 +465,257 @@ function App() {
             }
             setAppData(parsed);
         }
-        const theme = localStorage.getItem('theme');
-        if (theme === 'dark') { setIsDark(true); document.documentElement.classList.add('dark'); }
         if (localStorage.getItem('isAuth') === 'true') setAuth({ isAuth: true, isAdmin: localStorage.getItem('isAdmin') === 'true' });
     }, []);
 
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', isDark);
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }, [isDark]);
+
     const handleLogin = (u: string, p: string) => {
-        let isAdmin = u === import.meta.env.VITE_ADMIN_USER && p === import.meta.env.VITE_ADMIN_PASS;
-        let isUser = u === import.meta.env.VITE_USER && p === import.meta.env.VITE_USER_PASS;
-        if (isAdmin || isUser) {
-            localStorage.setItem('isAuth', 'true'); localStorage.setItem('isAdmin', isAdmin.toString());
-            setAuth({ isAuth: true, isAdmin });
-        } else alert('Hatalı giriş!');
+        const isAdmin = u === import.meta.env.VITE_ADMIN_USER && p === import.meta.env.VITE_ADMIN_PASS;
+        const isUser = u === import.meta.env.VITE_USER && p === import.meta.env.VITE_USER_PASS;
+        if (!isAdmin && !isUser) return false;
+        localStorage.setItem('isAuth', 'true'); localStorage.setItem('isAdmin', isAdmin.toString());
+        setAuth({ isAuth: true, isAdmin });
+        return true;
     };
 
-    const handleInput = (cat: CalculationCategory, f: string, v: string) => {
+    // Çıkış yalnızca oturumu kapatır; yönetim verileri ve tema tercihi korunur.
+    const handleLogout = () => {
+        localStorage.removeItem('isAuth');
+        localStorage.removeItem('isAdmin');
+        setAuth({ isAuth: false, isAdmin: false });
+        setView('calc');
+    };
+
+    const handleInput = (cat: CalculationCategory, f: PeriodField, v: string) => {
         const newData = { ...inputs[cat], [f]: v };
+        const lookup = (series: Record<string, number>, key: string) => series[key] !== undefined ? String(series[key]) : '';
         if (cat === 'tufe' && ['month1', 'year1', 'month2', 'year2'].includes(f)) {
-            const k1 = `${newData.year1}-${newData.month1.padStart(2, '0')}`;
-            const k2 = `${newData.year2}-${newData.month2.padStart(2, '0')}`;
-            if (newData.month1 && newData.year1) newData.value1 = appData?.TUIK_MOCK_DATA[k1] || '';
-            if (newData.month2 && newData.year2) newData.value2 = appData?.TUIK_MOCK_DATA[k2] || '';
+            if (newData.month1 && newData.year1) newData.value1 = lookup(appData.TUIK_MOCK_DATA, `${newData.year1}-${newData.month1.padStart(2, '0')}`);
+            if (newData.month2 && newData.year2) newData.value2 = lookup(appData.TUIK_MOCK_DATA, `${newData.year2}-${newData.month2.padStart(2, '0')}`);
         }
         if (cat === 'wage' && ['year1', 'year2'].includes(f)) {
-            if (newData.year1) newData.value1 = appData?.ASGARI_UCRET_MOCK_DATA[newData.year1] || '';
-            if (newData.year2) newData.value2 = appData?.ASGARI_UCRET_MOCK_DATA[newData.year2] || '';
+            if (newData.year1) newData.value1 = lookup(appData.ASGARI_UCRET_MOCK_DATA, newData.year1);
+            if (newData.year2) newData.value2 = lookup(appData.ASGARI_UCRET_MOCK_DATA, newData.year2);
         }
         setInputs({ ...inputs, [cat]: newData });
     };
 
     const calculate = () => {
-        const validateDates = (data: any) => {
-            if (!data.year1 || !data.month1 || !data.year2 || !data.month2) return true; // Let the 'missing data' check handle this
-            const d1 = parseInt(data.year1) * 12 + parseInt(data.month1);
-            const d2 = parseInt(data.year2) * 12 + parseInt(data.month2);
-            return d2 >= d1;
+        const isOrdered = (data: CalculationData) => {
+            if (!data.year1 || !data.month1 || !data.year2 || !data.month2) return true;
+            return Number(data.year2) * 12 + Number(data.month2) >= Number(data.year1) * 12 + Number(data.month1);
         };
-
-        if (!validateDates(inputs.fuel) || !validateDates(inputs.tufe) || !validateDates(inputs.wage)) {
-            alert('İkinci dönem tarihi, birinci dönem tarihine eşit veya sonra olmalıdır!');
+        const unordered = (Object.keys(CATEGORY_LABELS) as CalculationCategory[]).filter(cat => !isOrdered(inputs[cat]));
+        if (unordered.length) {
+            setCalcError(`Bitiş dönemi, başlangıç döneminden önce olamaz. Kontrol edilecek alan: ${unordered.map(cat => CATEGORY_LABELS[cat]).join(', ')}.`);
             return;
         }
 
-        const calc = (data: any, w: number) => {
+        const calc = (data: CalculationData, w: number): CalculationResult => {
             const v1 = parseFloat(data.value1), v2 = parseFloat(data.value2);
-            if (!v1 || !v2) return { isValid: false, error: 'Eksik veri' };
+            if (!v1 || !v2) return { isValid: false, error: 'Başlangıç ve bitiş değerlerini girin.' };
             const change = ((v2 - v1) / v1) * 100;
             return { change, weightedChange: change * w, isValid: true };
         };
+        setCalcError('');
         setResults({
-            fuel: calc(inputs.fuel, appData!.WEIGHTS.fuel),
-            tufe: calc(inputs.tufe, appData!.WEIGHTS.tufe),
-            wage: calc(inputs.wage, appData!.WEIGHTS.wage)
+            fuel: calc(inputs.fuel, appData.WEIGHTS.fuel),
+            tufe: calc(inputs.tufe, appData.WEIGHTS.tufe),
+            wage: calc(inputs.wage, appData.WEIGHTS.wage)
         });
     };
 
     const handleReset = () => {
-        setInputs({ fuel: { ...INITIAL_FUEL_STATE }, tufe: { ...INITIAL_TUFE_STATE }, wage: { ...INITIAL_DATA_STATE } });
+        setInputs(initialInputs());
         setResults({});
+        setCalcError('');
     };
 
-    const totalChange = Object.values(results).reduce((s: number, r: any) => s + (r.weightedChange || 0), 0);
+    const hasResults = Object.keys(results).length > 0;
+    const missingCategories = (Object.keys(CATEGORY_LABELS) as CalculationCategory[]).filter(cat => hasResults && !results[cat]?.isValid);
+    const isComplete = hasResults && missingCategories.length === 0;
+    // Eksik kalemle hesaplanan toplam yanıltıcı olur; tüm kalemler geçerli değilse toplam üretilmez.
+    const totalChange = isComplete ? Object.values(results).reduce((s, r) => s + (r && r.isValid ? r.weightedChange : 0), 0) : 0;
     const years = useMemo(() => generateYearOptions(), []);
+
+    const tariffRows = useMemo(() => {
+        const factor = 1 + totalChange / 100;
+        const fullFare = appData.TICKET_TYPES.find(t => t.id === FULL_FARE_TICKET_ID);
+        const fullRaw = fullFare ? fullFare.price * factor : 0;
+        const fullApplied = roundToLira(fullRaw);
+        return appData.TICKET_TYPES.map(t => {
+            if (t.id === NON_KART43_TICKET_ID && fullFare) {
+                const surcharge = nonKart43Surcharge(fullApplied);
+                return { ...t, rawPrice: fullRaw + surcharge, newPrice: fullApplied + surcharge };
+            }
+            const rawPrice = t.price * factor;
+            return { ...t, rawPrice, newPrice: roundToLira(rawPrice) };
+        });
+    }, [appData.TICKET_TYPES, totalChange]);
 
     if (!auth.isAuth) return <LoginComponent onLogin={handleLogin} />;
 
-    const staggerContainer = {
-        hidden: { opacity: 0 },
-        show: {
-            opacity: 1,
-            transition: { staggerChildren: 0 }
-        }
-    };
-
-    const fadeUp = {
-        hidden: { opacity: 0, y: 20 },
-        show: { opacity: 1, y: 0, transition: { ease: "easeOut" as const, duration: 0.15 } }
-    };
+    const navItems = [
+        { id: 'calc' as const, label: 'Hesaplama ekranı' },
+        { id: 'dengeleme' as const, label: 'Tarife dengeleme' },
+        ...(auth.isAdmin ? [{ id: 'admin' as const, label: 'Yönetim paneli' }] : []),
+    ];
 
     return (
-        <div className="corporate-app min-h-screen relative">
-            <div className="bg-noise" />
-
-            <div className="max-w-[1400px] mx-auto p-4 sm:p-8 relative z-10">
-                <header className="municipal-header">
-                    <div className="flex items-center gap-4 w-full sm:w-auto justify-center sm:justify-start">
-                        <img src={logo} className="w-12 h-12 sm:w-16 sm:h-16" alt="Kütahya Belediyesi" />
-                        <div className="text-center sm:text-left">
-                            <p className="municipal-eyebrow">Kütahya Belediyesi</p><h1 className="municipal-title">Eşel Mobil Tarife Hesaplama Sistemi</h1>
-                            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 tracking-widest mt-1">Ulaşım Hizmetleri Müdürlüğü</p>
+        <div className="app min-h-screen">
+            <div className="app-shell">
+                <header className="app-header">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="app-brand">
+                            <img src={logo} alt="Kütahya Belediyesi logosu" width={60} height={60} />
+                            <div>
+                                <h1 className="app-title">Eşel Mobil Tarife Hesaplama Sistemi</h1>
+                                <p className="app-org">Kütahya Belediyesi · Ulaşım Hizmetleri Müdürlüğü</p>
+                            </div>
                         </div>
+                        <p className="print-meta sr-only-print">Eşel Mobil Hesaplama Cetveli<br />Düzenlenme tarihi: {today()}</p>
                     </div>
 
-                    <div className="municipal-nav print:hidden">
-                        <button onClick={() => setView('calc')} className={`px-4 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm dark:text-white transition-all ${view === 'calc' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20'}`}>Hesaplama Ekranı</button>
-                        <button onClick={() => setView('dengeleme')} className={`px-4 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm dark:text-white transition-all ${view === 'dengeleme' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20'}`}>Tarife Dengeleme</button>
-                        {auth.isAdmin && <button onClick={() => setView('admin')} className={`px-4 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm dark:text-white transition-all ${view === 'admin' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20'}`}>Yönetim Paneli</button>}
-                        <button aria-label="Renk temasını değiştir" onClick={() => { setIsDark(!isDark); document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', isDark ? 'light' : 'dark'); }} className="bg-white/80 dark:bg-white/10 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white dark:hover:bg-white/20 transition-all">{isDark ? <Sun className="w-4 h-4 text-white" /> : <Moon className="w-4 h-4" />}</button>
-                        <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-red-500/10 text-red-600 dark:text-red-400 px-6 py-2 rounded-xl font-bold text-sm hover:bg-red-500 hover:text-white transition-all">Çıkış</button>
-                    </div>
+                    <nav className="app-nav print:hidden" aria-label="Ana menü">
+                        {navItems.map(item => (
+                            <button key={item.id} type="button" className="nav-link" aria-current={view === item.id ? 'page' : undefined} onClick={() => setView(item.id)}>{item.label}</button>
+                        ))}
+                        <span className="nav-spacer" />
+                        <button type="button" className="btn btn--ghost btn--icon" aria-label="Renk temasını değiştir" aria-pressed={isDark} title={isDark ? 'Açık temaya geç' : 'Koyu temaya geç'} onClick={() => setIsDark(!isDark)}>
+                            {isDark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
+                        </button>
+                        <button type="button" className="btn btn--danger" onClick={handleLogout}><LogOut aria-hidden="true" />Çıkış</button>
+                    </nav>
                 </header>
 
-                <AnimatePresence mode="wait">
+                <main key={view} className="view-enter">
                     {view === 'admin' ? (
-                        <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><AdminPanel data={appData} onUpdate={d => { setAppData(d); localStorage.setItem('appConstants', JSON.stringify(d)); }} /></motion.div>
+                        <AdminPanel data={appData} onUpdate={d => { setAppData(d); localStorage.setItem('appConstants', JSON.stringify(d)); }} />
                     ) : view === 'dengeleme' ? (
-                        <motion.div key="dengeleme" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}><TarifeDengeleme defaultIncreaseRate={totalChange > 0 ? totalChange : 0} /></motion.div>
+                        <TarifeDengeleme defaultIncreaseRate={totalChange > 0 ? totalChange : 0} />
                     ) : (
-                        <motion.div key="calc" variants={staggerContainer} initial="hidden" animate="show" className="calculation-layout">
-
-                            <section className="decision-band" aria-label="Hesaplamaya esas karar bilgileri">
+                        <div className="calculation-layout">
+                            <section className="panel decision-band" aria-label="Hesaplamaya esas karar bilgileri">
                                 <dl>
-                                    <div><dt>Son hesaplama tarihi</dt><dd>04.09.2026</dd></div>
-                                    <div><dt>Esas yakıt fiyatı</dt><dd>90,67 TL <small>M Oil – Total</small></dd></div>
-                                    <div><dt>Encümen kararı</dt><dd>08.09.2026 <small>1576 sayılı karar</small></dd></div>
-                                    <div><dt>Tarife yürürlük tarihi</dt><dd>11.09.2026</dd></div>
+                                    <div><dt>Son hesaplama tarihi</dt><dd>{DECISION.calculationDate}</dd></div>
+                                    <div><dt>Esas yakıt fiyatı</dt><dd>{formatNumber(DECISION.fuelPrice)} TL <small>{DECISION.fuelSource}</small></dd></div>
+                                    <div><dt>Encümen kararı</dt><dd>{DECISION.councilDecisionDate} <small>{DECISION.councilDecisionNo} sayılı karar</small></dd></div>
+                                    <div><dt>Tarife yürürlük tarihi</dt><dd>{DECISION.effectiveDate}</dd></div>
                                 </dl>
-                                <p>TÜFE baz yılı: 2025 = 100</p>
+                                <p>TÜFE baz yılı: {DECISION.tufeBase}</p>
                             </section>
-                            <div className="section-heading"><span>01</span><div><h2>Hesaplama parametreleri</h2><p>Başlangıç ve bitiş dönemlerini karşılaştırarak maliyet değişimini hesaplayın.</p></div></div>
-                            {/* LEFT PANEL - INPUTS & RESULTS */}
-                            <motion.div variants={fadeUp} className="parameter-area space-y-6">
-                                <div className="parameter-grid">
-                                    <InputSection title="Yakıt (Mazot) Fiyatı" data={inputs.fuel} onDataChange={(f: any, v: any) => handleInput('fuel', f, v)} color="orange" currency years={years} infoLink={{ url: 'https://tppd.com.tr', text: 'TPPD' }} />
-                                    <div className="parameter-secondary">
-                                        <InputSection title="Tüketici Fiyat Endeksi" data={inputs.tufe} onDataChange={(f: any, v: any) => handleInput('tufe', f, v)} color="blue" years={years} />
-                                        <InputSection title="Asgari Ücret" data={inputs.wage} onDataChange={(f: any, v: any) => handleInput('wage', f, v)} color="green" currency years={years} />
-                                    </div>
-                                    <div className="parameter-actions flex flex-col sm:flex-row gap-3 print:hidden">
-                                        <button onClick={calculate} className="flex-1 bg-indigo-600 dark:bg-indigo-500 text-white p-5 rounded-2xl font-bold text-xl tracking-wide shadow-xl shadow-indigo-600/20 hover:shadow-indigo-600/40 active:scale-95 transition-all">Senaryoyu Hesapla</button>
-                                        <button onClick={handleReset} className="px-8 py-5 bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-2xl font-bold tracking-wide hover:bg-black/10 dark:hover:bg-white/10 active:scale-95 transition-all">Sıfırla</button>
-                                    </div>
+
+                            <div className="section-title">
+                                <h2>Hesaplama parametreleri</h2>
+                                <p>Başlangıç ve bitiş dönemlerini karşılaştırarak maliyet değişimini hesaplayın.</p>
+                            </div>
+
+                            <div className="parameter-grid">
+                                <InputSection title="Yakıt (motorin) fiyatı" tone="fuel" data={inputs.fuel} onDataChange={(f, v) => handleInput('fuel', f, v)} currency years={years} infoLink={{ url: 'https://tppd.com.tr', text: 'TPPD fiyatları', label: 'TPPD akaryakıt fiyatları (yeni sekmede açılır)' }} />
+                                <InputSection title="Tüketici fiyat endeksi" tone="tufe" hint="Ay ve yıl seçildiğinde endeks değeri TÜİK verisinden otomatik doldurulur." data={inputs.tufe} onDataChange={(f, v) => handleInput('tufe', f, v)} years={years} />
+                                <InputSection title="Asgari ücret" tone="wage" hint="Yıl seçildiğinde o yılın asgari ücreti otomatik doldurulur." data={inputs.wage} onDataChange={(f, v) => handleInput('wage', f, v)} currency years={years} />
+                            </div>
+
+                            <div className="parameter-actions print:hidden">
+                                {calcError && <p className="alert alert--danger" role="alert"><AlertTriangle aria-hidden="true" />{calcError}</p>}
+                                <button type="button" onClick={handleReset} className="btn btn--secondary">Sıfırla</button>
+                                <button type="button" onClick={calculate} className="btn btn--primary"><Calculator aria-hidden="true" />Senaryoyu hesapla</button>
+                            </div>
+
+                            {hasResults && (
+                                <div className="result-grid">
+                                    <ResultCard title="Yakıt sonucu" tone="fuel" data={inputs.fuel} result={results.fuel} weight={appData.WEIGHTS.fuel} />
+                                    <ResultCard title="TÜFE sonucu" tone="tufe" data={inputs.tufe} result={results.tufe} weight={appData.WEIGHTS.tufe} />
+                                    <ResultCard title="Asgari ücret sonucu" tone="wage" data={inputs.wage} result={results.wage} weight={appData.WEIGHTS.wage} />
                                 </div>
+                            )}
 
-                                {Object.keys(results).length > 0 && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4">
-                                        <ResultCard title="Yakıt Sonucu" data={inputs.fuel} result={results.fuel || {}} valueType="Yakıt" color="orange" weightedLabel={`Ağırlık: %${appData!.WEIGHTS.fuel * 100}`} />
-                                        <ResultCard title="TÜFE Sonucu" data={inputs.tufe} result={results.tufe || {}} valueType="TÜFE" color="blue" weightedLabel={`Ağırlık: %${appData!.WEIGHTS.tufe * 100}`} />
-                                        <ResultCard title="Asgari Ücret Skoru" data={inputs.wage} result={results.wage || {}} valueType="Asgari Ücret" color="green" weightedLabel={`Ağırlık: %${appData!.WEIGHTS.wage * 100}`} />
+                            <div className="calculation-output">
+                                {hasResults && !isComplete ? (
+                                    <div className="alert alert--warning" role="alert">
+                                        <AlertTriangle aria-hidden="true" />
+                                        <span>
+                                            <strong>Ağırlıklı toplam hesaplanmadı.</strong> {missingCategories.map(cat => CATEGORY_LABELS[cat]).join(', ')} için başlangıç ve bitiş değerleri eksik.
+                                            Tüm kalemler tamamlanmadan toplam değişim ve tarife yansımaları üretilmez.
+                                        </span>
                                     </div>
-                                )}
-                            </motion.div>
+                                ) : isComplete ? (
+                                    <div className="space-y-6">
+                                        <section className="total-summary" aria-labelledby="total-heading">
+                                            <h2 id="total-heading">Ağırlıklı toplam değişim</h2>
+                                            <p>Yakıt, TÜFE ve asgari ücret değişimlerinin ağırlıklı toplamı.</p>
+                                            <p className="total-value">{formatSigned(totalChange)}%</p>
+                                        </section>
 
-                            {/* RIGHT PANEL - RESULTS */}
-                            <motion.div variants={fadeUp} className="calculation-output">
-                                {Object.keys(results).length > 0 ? (
-                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-
-                                        {/* HERO TOTAL CARD */}
-                                        <div className="total-summary">
-                                            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none print:hidden" />
-                                            <h2 className="text-xs sm:text-sm font-bold tracking-widest text-slate-500 dark:text-slate-400 mb-2 sm:mb-4">Ağırlıklı toplam değişim</h2>
-                                            <div className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tighter mb-2 break-words">
-                                                {totalChange > 0 ? '+' : ''}<CountUp end={totalChange} />%
+                                        <section className="panel tariff-comparison" aria-labelledby="tariff-heading">
+                                            <div className="table-heading">
+                                                <div>
+                                                    <h2 id="tariff-heading">Tarife yansımaları</h2>
+                                                    <p>Mevcut tarife ile hesaplanan senaryonun karşılaştırması. Tutarlar TL cinsindendir.</p>
+                                                </div>
+                                                <button type="button" onClick={() => window.print()} className="btn btn--primary print:hidden"><Printer aria-hidden="true" />Yazdır</button>
                                             </div>
-                                            <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">Sistem parametrelerine göre hesaplanmış net değişim oranı.</p>
-                                        </div>
-
-                                        <section className="glass-panel tariff-comparison" aria-labelledby="tariff-heading">
-                                            <div className="table-heading"><div><h2 id="tariff-heading">Tarife yansımaları</h2><p>Mevcut tarife ile hesaplanan senaryonun karşılaştırması. Tutarlar TL cinsindedir.</p></div><button onClick={() => window.print()} className="primary-action print:hidden">Yazıcıya Gönder</button></div>
-                                            <p className="comparison-hint">Tüm ücretleri görmek için tabloyu sağa kaydırın.</p>
+                                            <p className="comparison-hint scroll-hint">Tüm ücretleri görmek için tabloyu sağa kaydırın.</p>
                                             <div className="comparison-scroll" tabIndex={0} role="region" aria-label="Tarife karşılaştırma tablosu">
                                                 <table>
                                                     <thead><tr><th scope="col">Biniş türü</th><th scope="col">Mevcut ücret</th><th scope="col">Hesaplanan ücret</th><th scope="col">Uygulanacak ücret</th><th scope="col">Değişim</th></tr></thead>
-                                                    <tbody>{appData?.TICKET_TYPES.map((t: { id: string; name: string; price: number }) => {
-                                                        const rawPrice = t.price * (1 + totalChange / 100);
-                                                        const newPrice = Math.round(rawPrice);
-                                                        const diff = newPrice - t.price;
-                                                        const percentChange = ((newPrice - t.price) / t.price) * 100;
-                                                        const money = (value: number) => value.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                                        return <tr key={t.id}><th scope="row">{t.name}</th><td>{money(t.price)}</td><td>{money(rawPrice)}</td><td className="applied-price">{money(newPrice)}</td><td>{diff >= 0 ? '+' : ''}{money(diff)}<small>{percentChange >= 0 ? '+' : ''}%{money(percentChange)}</small></td></tr>;
+                                                    <tbody>{tariffRows.map(t => {
+                                                        const diff = t.newPrice - t.price;
+                                                        const percentChange = (diff / t.price) * 100;
+                                                        return (
+                                                            <tr key={t.id}>
+                                                                <th scope="row">{t.name}</th>
+                                                                <td data-label="Mevcut ücret">{formatNumber(t.price)}</td>
+                                                                <td data-label="Hesaplanan ücret">{formatNumber(t.rawPrice)}</td>
+                                                                <td data-label="Uygulanacak ücret" className="applied-price">{formatNumber(t.newPrice)}</td>
+                                                                <td data-label="Değişim">{diff >= 0 ? '+' : ''}{formatNumber(diff)}<small>{percentChange >= 0 ? '+' : ''}%{formatNumber(percentChange)}</small></td>
+                                                            </tr>
+                                                        );
                                                     })}</tbody>
                                                 </table>
                                             </div>
-                                            <p className="table-footnote">Uygulanacak ücret sütunu, hesaplanan senaryonun tam TL'ye yuvarlanmış sonucudur; tek başına yeni bir tarife kararı değildir.</p>
+                                            <p className="table-footnote">Uygulanacak ücret, hesaplanan ücretin Meclis kararına göre tam TL'ye yuvarlanmış halidir; tek başına yeni bir tarife kararı değildir. Kart-43 dışındaki kartlarla biniş ücreti, tam bilet uygulanacak ücretine EÜTS ek ücret tablosundaki tutar eklenerek bulunur.</p>
                                         </section>
-
-                                    </motion.div>
+                                    </div>
                                 ) : (
-                                    <div className="empty-state glass-panel">
-                                        <Calculator className="w-16 h-16 text-slate-300 mb-6" />
-                                        <h3 className="text-lg font-bold text-slate-400 mb-2">Sonuç Bekleniyor</h3>
-                                        <p className="text-sm text-slate-500 font-medium">Maliyet değişimlerini görmek için dönemsel verileri girip senaryoyu hesaplayın.</p>
+                                    <div className="panel empty-state">
+                                        <Calculator aria-hidden="true" />
+                                        <h3>Henüz hesaplama yapılmadı</h3>
+                                        <p>Dönem değerlerini kontrol edip "Senaryoyu hesapla" düğmesine bastığınızda sonuçlar ve tarife yansımaları burada görünür.</p>
                                     </div>
                                 )}
-                            </motion.div>
+                            </div>
 
-                            <section aria-labelledby="calculation-notes-title" className="lg:col-span-12 rounded-xl border border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5 p-4 sm:p-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                                <h2 id="calculation-notes-title" className="mb-3 font-bold text-slate-800 dark:text-white">Notlar</h2>
-                                <ol className="list-decimal pl-5 space-y-2">
+                            <section aria-labelledby="calculation-notes-title" className="panel notes">
+                                <h2 id="calculation-notes-title">Notlar</h2>
+                                <ol>
                                     <li>03.09.2025 tarihli ve 247 sayılı Belediye Meclis kararına istinaden, Halk otobüsleri fiyat tarifesi değişikliklerinin Eşel Mobil Sistemine göre yapılmasına karar verilmiştir.</li>
                                     <li>01.04.2026 tarihli ve 143 sayılı Belediye Meclis kararına istinaden, hazırlanan tarifelerin görüşülmesi ve onaylanması hususunda Belediye Encümenine yetki verilmiştir.</li>
                                     <li>01.04.2026 tarihli ve 143 sayılı Belediye Meclis kararına istinaden, hesaplanan tarife bedellerinde küsuratın 0,5 ve üzerinde olması durumunda bir üst tam TL'ye, 0,5 TL'nin altında olması durumunda ise bir alt tam TL'ye yuvarlanması gerekmektedir.</li>
-                                    <li>EÜTS Teknik Şartnamesi kapsamında, Kart 43 sistem kartları dışındaki kartlarla yapılan binişlerde; tam biniş ücretinin 35,01 TL ile 40,00 TL arasında olması halinde, söz konusu kartlara uygulanacak ücret, tam kart ücretine 8,00 TL ilave edilerek hesaplanır.</li>
+                                    <li>
+                                        EÜTS Teknik Şartnamesi kapsamında, Kart 43 sistem kartları dışındaki kartlarla yapılan binişlerde uygulanacak ücret, hattın tam ücretine ücret aralığına göre belirlenen ek ücret ilave edilerek hesaplanır (örneğin tam ücret 38,00 TL ise 38,00 + 8,00 = 46,00 TL).
+                                        <details className="no-print">
+                                            <summary>Ek ücret tablosunu göster</summary>
+                                            <SurchargeTable />
+                                        </details>
+                                        <div className="print-only"><SurchargeTable /></div>
+                                    </li>
                                     <li>Mazot maliyetinin hesaplanmasında, tabloda yer alan firmalar tarafından sunulan fiyatlar karşılaştırılmış ve hesaplamaya esas olmak üzere en düşük birim fiyat dikkate alınmıştır.</li>
                                 </ol>
                             </section>
-                        </motion.div>
+
+                            <div className="signature-block" aria-hidden="true">
+                                <div>Hazırlayan</div>
+                                <div>Kontrol Eden</div>
+                                <div>Onaylayan</div>
+                            </div>
+                        </div>
                     )}
-                </AnimatePresence>
+                </main>
             </div>
         </div>
     );
