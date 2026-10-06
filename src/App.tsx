@@ -26,10 +26,10 @@ const DECISION = constants.DECISION_INFO;
 
 const MONTH_NAMES = ["", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 const CATEGORY_LABELS: Record<CalculationCategory, string> = { fuel: 'Yakıt', tufe: 'TÜFE', wage: 'Asgari ücret' };
-const LATEST_TUFE_KEY = Object.keys(INITIAL_TUIK).sort().pop()!;
+const TUFE_START_KEY = `${DECISION.tufeYear}-${String(DECISION.tufeMonth).padStart(2, '0')}`;
 const INITIAL_DATA_STATE: CalculationData = { month1: '', year1: '', value1: '', month2: '', year2: '', value2: '' };
 const INITIAL_FUEL_STATE: CalculationData = { ...INITIAL_DATA_STATE, month1: String(DECISION.fuelMonth), year1: String(DECISION.fuelYear), value1: String(DECISION.fuelPrice) };
-const INITIAL_TUFE_STATE: CalculationData = { ...INITIAL_DATA_STATE, month1: String(Number(LATEST_TUFE_KEY.slice(5))), year1: LATEST_TUFE_KEY.slice(0, 4), value1: String(INITIAL_TUIK[LATEST_TUFE_KEY]) };
+const INITIAL_TUFE_STATE: CalculationData = { ...INITIAL_DATA_STATE, month1: String(DECISION.tufeMonth), year1: String(DECISION.tufeYear), value1: String(INITIAL_TUIK[TUFE_START_KEY] ?? '') };
 const initialInputs = () => ({ fuel: { ...INITIAL_FUEL_STATE }, tufe: { ...INITIAL_TUFE_STATE }, wage: { ...INITIAL_DATA_STATE } });
 
 const formatNumber = (value: number, decimals = 2) => value.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
